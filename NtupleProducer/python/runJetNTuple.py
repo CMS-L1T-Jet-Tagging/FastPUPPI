@@ -99,11 +99,11 @@ def addSeededConeJets():
 def addMultitagging(trktype = "extended"):
     process.load("L1Trigger.Phase2L1ParticleFlow.l1tSC4NGJetProducer_cff")
     if trktype == "extended":
-        process.l1tSC4NGJetProducerPuppiCorrectedEmulator.jets = cms.InputTag("l1tSC4PFL1PuppiExtendedEmulator")
+        process.l1tSC4NGJetProducerPuppi.jets = cms.InputTag("l1tSC4PFL1PuppiExtendedEmulator")
     else:
-        process.l1tSC4NGJetProducerPuppiCorrectedEmulator.jets = cms.InputTag("l1tSC4PFL1PuppiEmulator")
-    process.l1tSC4NGJetProducerPuppiCorrectedEmulator.maxJets = cms.int32(500)
-    process.l1tSC4NGJetProducerPuppiCorrectedEmulator.l1tSC4NGJetModelPath = cms.string(os.environ['CMSSW_BASE']+"/src/L1TSC4NGJetModel/L1TSC4NGJetModel")
+        process.l1tSC4NGJetProducerPuppi.jets = cms.InputTag("l1tSC4PFL1PuppiEmulator")
+    process.l1tSC4NGJetProducerPuppi.maxJets = cms.int32(500)
+    process.l1tSC4NGJetProducerPuppi.l1tSC4NGJetModelPath = cms.string(os.environ['CMSSW_BASE']+"/src/L1TSC4NGJetModel/L1TSC4NGJetModel")
     process.extraPFStuff.add(process.l1tSC4NGJetTask)
 
 def addBtagging(): #extended TRK
