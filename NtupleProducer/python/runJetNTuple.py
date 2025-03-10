@@ -65,7 +65,8 @@ def addJetNTuple(trktype = "extended", nparam = 5):
     process.outnano = cms.EDAnalyzer("JetNTuplizer",
         genJets = cms.InputTag("ak4GenJetsNoNu"),
         genParticles = cms.InputTag("genParticles"),
-        scPuppiJets = cms.InputTag("l1tSC4NGJetProducerPuppi","l1tSC4NGJets"),
+        scPuppiJets = cms.InputTag(jetColl),
+        scNGPuppiJets = cms.InputTag("l1tSC4NGJetProducerPuppi","l1tSC4NGJets"),
         scPuppiJetsCorr = cms.InputTag(jetCollCorr),
         nnTaus = cms.InputTag("l1tNNTauProducerPuppi","L1PFTausNN"),
         genJetsFlavour = cms.InputTag("genFlavourInfo"),
@@ -107,7 +108,7 @@ def addMultitagging(trktype = "extended"):
 
 def addBtagging(): #extended TRK
     process.load("L1Trigger.Phase2L1ParticleFlow.L1BJetProducer_cff")
-    process.l1tBJetProducerPuppiCorrectedEmulator.jets = cms.InputTag("l1tSC4NGJetProducerPuppi","l1tSC4NGJets")
+    process.l1tBJetProducerPuppiCorrectedEmulator.jets = cms.InputTag("l1tSC4PFL1PuppiExtendedEmulator")
     process.l1tBJetProducerPuppiCorrectedEmulator.maxJets = cms.int32(500)
     process.extraPFStuff.add(process.L1TBJetsTask)
     #process.l1pfjetTable.jets.scPuppiBJet = cms.InputTag('l1tBJetProducerPuppiCorrectedEmulator')  
