@@ -686,7 +686,7 @@ JetNTuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     for (size_t i = 0; i < jetv_l1.size(); i++) {
 
         l1ct::Jet ctngJet = l1ct::Jet::unpack(ngjetv_l1[i]->getHWJetCT());
-        std::vector<float> tagScores = ngjetv_l1[i]->floatIDScores();
+        std::vector<float> tagScores = ngjetv_l1[i]->getTagScores();
         jet_SC4NGJet_score_light_ = tagScores[2];
         jet_SC4NGJet_score_b_ = tagScores[0];
         jet_SC4NGJet_score_taup_ = tagScores[4];
