@@ -682,24 +682,20 @@ JetNTuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         muonv_l1.push_back(mref);                                                                                                                                                              
     }
     sort(muonv_l1.begin(), muonv_l1.end(), muonRefSorter);
-
-    for (size_t i = 0; i < ngjetv_l1.size(); i++) {\
-        l1ct::Jet ctngJet = l1ct::Jet::unpack(ngjetv_l1[i]->getHWJetCT());
-        if (ngjetv_l1[i]->getTagScores().size() != 0) {
-            jet_SC4NGJet_score_light_ = float(ctngJet.hwTagScores[2] );
-            jet_SC4NGJet_score_b_ = float(ctngJet.hwTagScores[0] );
-            jet_SC4NGJet_score_taup_ = float(ctngJet.hwTagScores[4] );
-            jet_SC4NGJet_score_taum_ = float(ctngJet.hwTagScores[5] );
-            jet_SC4NGJet_score_gluon_ = float(ctngJet.hwTagScores[3] );
-            jet_SC4NGJet_score_charm_ = float(ctngJet.hwTagScores[1] );
-            jet_SC4NGJet_score_muon_ = float(ctngJet.hwTagScores[6] );
-            jet_SC4NGJet_score_electron_ = float(ctngJet.hwTagScores[7] );
-            jet_SC4NGJet_score_regression_ = ngjetv_l1[i]->getPtCorrection();
-        }
-    }
-
     // loop over reco jets
     for (size_t i = 0; i < jetv_l1.size(); i++) {
+
+        l1ct::Jet ctngJet = l1ct::Jet::unpack(ngjetv_l1[i]->getHWJetCT());
+        std::vector<float> tagScores = ngjetv_l1[i]->floatIDScores();
+        jet_SC4NGJet_score_light_ = tagScores[2];
+        jet_SC4NGJet_score_b_ = tagScores[0];
+        jet_SC4NGJet_score_taup_ = tagScores[4];
+        jet_SC4NGJet_score_taum_ = tagScores[5];
+        jet_SC4NGJet_score_gluon_ = tagScores[3];
+        jet_SC4NGJet_score_charm_ = tagScores[1];
+        jet_SC4NGJet_score_muon_ = tagScores[6];
+        jet_SC4NGJet_score_electron_ = tagScores[7];
+        jet_SC4NGJet_score_regression_ = ngjetv_l1[i]->getPtCorrection();
         
         // get hardware value jet
         l1ct::Jet ctJet = l1ct::Jet::unpack(jetv_l1[i]->getHWJetCT());
