@@ -162,7 +162,6 @@ class JetNTuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::
         edm::EDGetTokenT<std::vector<reco::GenJet>> genjets_;
         edm::EDGetTokenT<std::vector<reco::GenParticle>> genparticles_;
         edm::EDGetTokenT<std::vector<l1t::PFJet>> scjets_;
-        edm::EDGetTokenT<std::vector<l1t::PFJet>> scngjets_;
         edm::EDGetTokenT<std::vector<l1t::PFJet>> scjetsCorr_;
         edm::EDGetTokenT<std::vector<l1t::PFTau>> nntaus_;
         edm::EDGetTokenT<std::vector<l1t::TkElectron>> electrons_;
@@ -381,7 +380,6 @@ JetNTuplizer::JetNTuplizer(const edm::ParameterSet& iConfig) :
     genjets_(consumes<std::vector<reco::GenJet>>(iConfig.getParameter<edm::InputTag>("genJets"))),
     genparticles_(consumes<std::vector<reco::GenParticle>>(iConfig.getParameter<edm::InputTag>("genParticles"))),
     scjets_(consumes<std::vector<l1t::PFJet>>(iConfig.getParameter<edm::InputTag>("scPuppiJets"))), // l1tSCPFL1PuppiEmulator
-    scngjets_(consumes<std::vector<l1t::PFJet>>(iConfig.getParameter<edm::InputTag>("scNGPuppiJets"))), // l1tSC4NGJetProducerPuppi
     scjetsCorr_(consumes<std::vector<l1t::PFJet>>(iConfig.getParameter<edm::InputTag>("scPuppiJetsCorr"))), // l1tSCPFL1PuppiEmulator
     nntaus_(consumes<std::vector<l1t::PFTau>>(iConfig.getParameter<edm::InputTag>("nnTaus"))), 
     electrons_(consumes<std::vector<l1t::TkElectron>>(iConfig.getParameter<edm::InputTag>("electrons"))), 
@@ -573,7 +571,6 @@ JetNTuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     edm::Handle<std::vector<reco::GenJet>> genjets;
     edm::Handle<std::vector<reco::GenParticle>> genparticles;
     edm::Handle<std::vector<l1t::PFJet>> scjets;
-    edm::Handle<std::vector<l1t::PFJet>> scngjets;
     edm::Handle<std::vector<l1t::PFJet>> scjetsCorr;
     edm::Handle<std::vector<l1t::PFTau>> nntaus;
     edm::Handle<std::vector<l1t::TkElectron>> electrons;
@@ -596,7 +593,6 @@ JetNTuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         
     }
     iEvent.getByToken(scjets_, scjets);
-    iEvent.getByToken(scngjets_, scngjets);
     iEvent.getByToken(scjetsCorr_, scjetsCorr);
     iEvent.getByToken(nntaus_, nntaus);
     iEvent.getByToken(electrons_, electrons);
@@ -637,17 +633,6 @@ JetNTuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     }
     sort(jetv_l1.begin(), jetv_l1.end(), jetRefSorter);
 
-        // reco jets
-    std::vector<l1t::PFJetRef> ngjetv_l1;
-    for (auto ngjets_iter = scngjets->begin(); ngjets_iter != scngjets->end(); ++ngjets_iter) {                                                                                                   
-        l1t::PFJetRef ngjref(scngjets, ngjets_iter - scngjets->begin());                                                                                                                
-        if (ngjref->pt() < jetPtMin_) continue;
-        if (fabs(ngjref->eta()) > jetEtaMax_) continue;                 
-        if (fabs(ngjref->eta()) < jetEtaMin_) continue;                 
-        ngjetv_l1.push_back(ngjref);                                                                                                                                                              
-    }
-    sort(ngjetv_l1.begin(), ngjetv_l1.end(), jetRefSorter);
-
     // reco jets, with jec
     std::vector<l1t::PFJetRef> jetv_l1_corr;
     for (auto jets_iter_corr = scjetsCorr->begin(); jets_iter_corr != scjetsCorr->end(); ++jets_iter_corr) {                                                                                                   
@@ -683,22 +668,41 @@ JetNTuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     }
     sort(muonv_l1.begin(), muonv_l1.end(), muonRefSorter);
     // loop over reco jets
-    for (size_t i = 0; i < jetv_l1.size(); i++) {
 
-        l1ct::Jet ctngJet = l1ct::Jet::unpack(ngjetv_l1[i]->getHWJetCT());
-        std::vector<float> tagScores = ngjetv_l1[i]->getTagScores();
-        jet_SC4NGJet_score_light_ = tagScores[2];
-        jet_SC4NGJet_score_b_ = tagScores[0];
-        jet_SC4NGJet_score_taup_ = tagScores[4];
-        jet_SC4NGJet_score_taum_ = tagScores[5];
-        jet_SC4NGJet_score_gluon_ = tagScores[3];
-        jet_SC4NGJet_score_charm_ = tagScores[1];
-        jet_SC4NGJet_score_muon_ = tagScores[6];
-        jet_SC4NGJet_score_electron_ = tagScores[7];
-        jet_SC4NGJet_score_regression_ = ngjetv_l1[i]->getPtCorrection();
-        
-        // get hardware value jet
+    for (size_t i = 0; i < jetv_l1.size(); i++) {
         l1ct::Jet ctJet = l1ct::Jet::unpack(jetv_l1[i]->getHWJetCT());
+        std::vector<float> tagScores = jetv_l1[i]->getTagScores();
+        float score_light = -999;
+        float score_b = -999;
+        float score_taup = -999;
+        float score_taum = -999;
+        float score_gluon = -999;
+        float score_charm = -999;
+        float score_muon = -999;
+        float score_electron = -999;
+        float score_regression = 1;
+        if (tagScores.size() > 0){
+            score_light = tagScores[2];
+            score_b = tagScores[0];
+            score_taup = tagScores[4];
+            score_taum = tagScores[5];
+            score_gluon = tagScores[3];
+            score_charm = tagScores[1];
+            score_muon = tagScores[6];
+            score_electron = tagScores[7];
+            score_regression = jetv_l1[i]->getPtCorrection();
+        }
+
+        jet_SC4NGJet_score_light_ = score_light;
+        jet_SC4NGJet_score_b_ = score_b;
+        jet_SC4NGJet_score_taup_ =score_taup;
+        jet_SC4NGJet_score_taum_ = score_taum;
+        jet_SC4NGJet_score_gluon_ = score_gluon;
+        jet_SC4NGJet_score_charm_ = score_charm;
+        jet_SC4NGJet_score_muon_ = score_muon;
+        jet_SC4NGJet_score_electron_ = score_electron;
+        jet_SC4NGJet_score_regression_ = score_regression;
+        // get hardware value jet
         jet_pt_ = float(ctJet.hwPt);
         jet_pt_phys_ = jetv_l1[i]->pt();
         jet_eta_ = float(ctJet.hwEta);
@@ -1031,7 +1035,7 @@ JetNTuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             jet_pfcand_pt.push_back(float(pfcand.hwPt()));
             jet_pfcand_pt_phys.push_back(pfcand.pt());
             jet_pfcand_pt_rel_phys.push_back(pfcand.pt()/jetv_l1[i]->pt());
-            jet_pfcand_pt_rel.push_back(float(pfcand.hwPt())/jet_pt_);
+            jet_pfcand_pt_rel.push_back(float(pfcand.hwPt())/jet_pt_raw_);
             jet_pfcand_isfilled.push_back(1);
             // jet_pfcand_px.push_back(pfcand.px());
             // jet_pfcand_py.push_back(pfcand.py());
@@ -1039,7 +1043,7 @@ JetNTuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             // jet_pfcand_pt_log.push_back(std::log(pfcand.pt()));
             jet_pfcand_pt_log.push_back(std::log(float(pfcand.hwPt())));
             // jet_pfcand_pt_rel_log.push_back(std::log(pfcand.pt()/jetv_l1[i]->pt()));
-            jet_pfcand_pt_rel_log.push_back(std::log(float(pfcand.hwPt())/jet_pt_));
+            jet_pfcand_pt_rel_log.push_back(std::log(float(pfcand.hwPt())/jet_pt_raw_));
             // jet_pfcand_eta.push_back(pfcand.eta());
             jet_pfcand_eta.push_back(float(pfcand.hwEta()));
             jet_pfcand_eta_phys.push_back(pfcand.eta());
