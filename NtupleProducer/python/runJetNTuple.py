@@ -54,19 +54,21 @@ process.extraPFStuff = cms.Task(
         process.L1TLayer1Task,
         process.L1TLayer2EGTask)
 
-def addJetNTuple(trktype = "extended", nparam = 5):
+def addJetNTuple(trktype = "extended", nparam = 5, tagged = True):
     # create new jet tupler
     jetColl = "l1tSC4PFL1PuppiExtendedEmulator"
     jetCollCorr = "l1tSC4PFL1PuppiExtendedEmulator"
     if trktype == "baseline":
         jetColl = "l1tSC4PFL1PuppiEmulator"
         jetCollCorr = "l1tSC4PFL1PuppiCorrectedEmulator"
+    if tagged:
+        jetColl = ("l1tSC4NGJetProducerPuppi","l1tSC4NGJets")
+        jetCollCorr = "l1tSC4PFL1PuppiCorrectedEmulator"
 
     process.outnano = cms.EDAnalyzer("JetNTuplizer",
         genJets = cms.InputTag("ak4GenJetsNoNu"),
         genParticles = cms.InputTag("genParticles"),
         scPuppiJets = cms.InputTag(jetColl),
-        scNGPuppiJets = cms.InputTag("l1tSC4NGJetProducerPuppi","l1tSC4NGJets"),
         scPuppiJetsCorr = cms.InputTag(jetCollCorr),
         nnTaus = cms.InputTag("l1tNNTauProducerPuppi","L1PFTausNN"),
         genJetsFlavour = cms.InputTag("genFlavourInfo"),
@@ -106,10 +108,11 @@ def addMultitagging(trktype = "extended"):
     process.l1tSC4NGJetProducerPuppi.l1tSC4NGJetModelPath = cms.string(os.environ['CMSSW_BASE']+"/src/L1TSC4NGJetModel/L1TSC4NGJetModel")
     process.extraPFStuff.add(process.l1tSC4NGJetTask)
 
-def addBtagging(): #extended TRK
+def addBtagging(jetColl): #extended TRK
     process.load("L1Trigger.Phase2L1ParticleFlow.L1BJetProducer_cff")
-    process.l1tBJetProducerPuppiCorrectedEmulator.jets = cms.InputTag("l1tSC4PFL1PuppiExtendedEmulator")
+    process.l1tBJetProducerPuppiCorrectedEmulator.jets = cms.InputTag(jetColl)
     process.l1tBJetProducerPuppiCorrectedEmulator.maxJets = cms.int32(500)
+    process.l1tBJetProducerPuppiCorrectedEmulator.useRawPt = cms.bool(True)
     process.extraPFStuff.add(process.L1TBJetsTask)
     #process.l1pfjetTable.jets.scPuppiBJet = cms.InputTag('l1tBJetProducerPuppiCorrectedEmulator')  
 
@@ -121,18 +124,18 @@ def addGenJetFlavourTable():
     process.p += process.selectedHadronsAndPartons
     process.p += process.genFlavourInfo
 
-def goMT(nthreads=2):
+def goMT(nthreads=1):
     process.options.numberOfThreads = cms.untracked.uint32(nthreads)
     process.options.numberOfStreams = cms.untracked.uint32(0)
 
 if True:
     process.source.fileNames  = cms.untracked.vstring(*inputMC)
-    goMT(4)
+    goMT()
     trktype = "extended"
     nparam = 5
     addSeededConeJets()
     addMultitagging(trktype = trktype)
-    addBtagging()
+    addBtagging(("l1tSC4NGJetProducerPuppi","l1tSC4NGJets"))
     addNNPuppiTaus()
     addGenJetFlavourTable()
     addJetNTuple(trktype = trktype, nparam = nparam)
