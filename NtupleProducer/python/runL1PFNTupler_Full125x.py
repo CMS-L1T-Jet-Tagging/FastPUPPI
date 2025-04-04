@@ -3,8 +3,8 @@ from Configuration.StandardSequences.Eras import eras
 
 process = cms.Process("IN", eras.Phase2C17I13M9)
 process.load('Configuration.StandardSequences.Services_cff')
-process.load('Configuration.Geometry.GeometryExtended2026D88Reco_cff')
-process.load('Configuration.Geometry.GeometryExtended2026D88_cff')
+process.load('Configuration.Geometry.GeometryExtendedRun4D88Reco_cff')
+process.load('Configuration.Geometry.GeometryExtendedRun4D88_cff')
 process.load('Configuration.StandardSequences.MagneticField_cff')
 process.load('SimGeneral.MixingModule.mixNoPU_cfi')
 process.load('Configuration.StandardSequences.EndOfProcess_cff')
