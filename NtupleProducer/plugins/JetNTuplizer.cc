@@ -177,17 +177,17 @@ class JetNTuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::
         // float dRJetGenMatch_ = 0.2;
         float dRJetGenMatch_ = 0.4;
         bool  isMC_;
-        float jetPtMin_ = 10;
-        float jetEtaMin_ = -2.4;
-        float jetEtaMax_ = 2.4;
+        float jetPtMin_ = 5.;
+        float jetEtaMin_ = -999.;
+        float jetEtaMax_ = 999.;
         float jetPFCandidatePtMin_ = 0.;
 
-        static constexpr size_t max_pfcand_ = 16;
+        // static constexpr size_t max_pfcand_ = 16;
         bool applyJetIDFlag = false;
         /// thresholds for matching
         float dRCone        = 0.2;
-        float ptGenLeptonMin = 8;
-        float ptGenTauVisibleMin = 15;
+        float ptGenLeptonMin = 5;
+        float ptGenTauVisibleMin = 5;
 
 
 
@@ -251,6 +251,13 @@ class JetNTuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::
     // float jet_py_;
     // float jet_pz_;
 
+    // gen infor for rate/eff studies
+    unsigned int ngenH_;
+    std::vector<float> genH_pt_;
+    std::vector<float> genH_mass_;
+    float genHH_pt_;
+    float genHH_mass_;
+
     float jet_SC4NGJet_score_light_;
     float jet_SC4NGJet_score_b_;
     float jet_SC4NGJet_score_taup_;
@@ -268,6 +275,7 @@ class JetNTuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::
     float jet_elepuppiiso_;
     float jet_muoniso_;
     float jet_taupt_;
+    float jet_taueta_;
 
     float jet_taumatch_dR_;
     float jet_elematch_dR_;
@@ -395,6 +403,12 @@ JetNTuplizer::JetNTuplizer(const edm::ParameterSet& iConfig) :
     // tree_->Branch("lumi", &lumi_, "lumi/i");
     tree_->Branch("event", &event_, "event/l");
 
+    tree_->Branch("ngenH", &ngenH_);
+    tree_->Branch("genH_pt", &genH_pt_, ngenH_);
+    tree_->Branch("genH_mass", &genH_mass_, ngenH_);
+    tree_->Branch("genHH_pt", &genHH_pt_);
+    tree_->Branch("genHH_mass", &genHH_mass_);
+
     tree_->Branch("jet_eta", &jet_eta_);
     tree_->Branch("jet_eta_phys", &jet_eta_phys_);
     tree_->Branch("jet_phi", &jet_phi_);
@@ -425,6 +439,7 @@ JetNTuplizer::JetNTuplizer(const edm::ParameterSet& iConfig) :
     tree_->Branch("jet_elepuppiiso", &jet_elepuppiiso_);
     tree_->Branch("jet_muoniso", &jet_muoniso_);
     tree_->Branch("jet_taupt", &jet_taupt_);
+    tree_->Branch("jet_taueta", &jet_taueta_);
     
     tree_->Branch("jet_reject", &jet_reject_);
     tree_->Branch("jet_tauflav", &jet_tauflav_);
@@ -491,13 +506,13 @@ JetNTuplizer::JetNTuplizer(const edm::ParameterSet& iConfig) :
     tree_->Branch("jet_pfcand_isChargedHadronMinus", &jet_pfcand_isChargedHadronMinus, njet_pfcand_);
 
     tree_->Branch("jet_pfcand_charge", &jet_pfcand_charge, njet_pfcand_);
-    tree_->Branch("jet_pfcand_pperp_ratio", &jet_pfcand_pperp_ratio, njet_pfcand_);
-    tree_->Branch("jet_pfcand_ppara_ratio", &jet_pfcand_ppara_ratio, njet_pfcand_);
+    // tree_->Branch("jet_pfcand_pperp_ratio", &jet_pfcand_pperp_ratio, njet_pfcand_);
+    // tree_->Branch("jet_pfcand_ppara_ratio", &jet_pfcand_ppara_ratio, njet_pfcand_);
     tree_->Branch("jet_pfcand_deta", &jet_pfcand_deta, njet_pfcand_);
     tree_->Branch("jet_pfcand_deta_phys", &jet_pfcand_deta_phys, njet_pfcand_);
     tree_->Branch("jet_pfcand_dphi", &jet_pfcand_dphi, njet_pfcand_);
     tree_->Branch("jet_pfcand_dphi_phys", &jet_pfcand_dphi_phys, njet_pfcand_);
-    tree_->Branch("jet_pfcand_etarel", &jet_pfcand_etarel, njet_pfcand_);
+    // tree_->Branch("jet_pfcand_etarel", &jet_pfcand_etarel, njet_pfcand_);
 
     tree_->Branch("jet_pfcand_track_valid", &jet_pfcand_track_valid, njet_pfcand_);
     tree_->Branch("jet_pfcand_track_isfilled", &jet_pfcand_track_isfilled, njet_pfcand_);
@@ -583,6 +598,13 @@ JetNTuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     }else{
         isMC_ = true;
     }
+
+    ngenH_ = 0;
+    genH_pt_.clear();
+    genH_mass_.clear();
+    genHH_mass_ = -1;
+    genHH_pt_ = -1;
+
     if (isMC_){
         iEvent.getByToken(genjets_, genjets);
         iEvent.getByToken(genparticles_, genparticles);
@@ -631,6 +653,20 @@ JetNTuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         if (fabs(jref->eta()) < jetEtaMin_) continue;                 
         jetv_l1.push_back(jref);                                                                                                                                                              
     }
+
+     // for event level plots, always store something
+     if (jetv_l1.size() < 1){
+             jetv_l1.clear();
+             for (auto jets_iter = scjets->begin(); jets_iter != scjets->end(); ++jets_iter) {
+                 l1t::PFJetRef jref(scjets, jets_iter - scjets->begin());
+                 // if (jref->pt() < jetPtMin_) continue;
+                 // if (fabs(jref->eta()) > jetEtaMax_) continue;
+                 // if (fabs(jref->eta()) < jetEtaMin_) continue;
+                 jetv_l1.push_back(jref);
+             }
+         }
+
+
     sort(jetv_l1.begin(), jetv_l1.end(), jetRefSorter);
 
     // reco jets, with jec
@@ -667,6 +703,7 @@ JetNTuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         muonv_l1.push_back(mref);                                                                                                                                                              
     }
     sort(muonv_l1.begin(), muonv_l1.end(), muonRefSorter);
+    
     // loop over reco jets
 
     for (size_t i = 0; i < jetv_l1.size(); i++) {
@@ -862,12 +899,14 @@ JetNTuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             jet_taumatch_dR_ = minDR_tau;
             jet_tauscore_ = tauv_l1[pos_matched_tau]->chargedIso();
             jet_taupt_ = tauv_l1[pos_matched_tau]->pt();
+            jet_taueta_ = tauv_l1[pos_matched_tau]->eta();
             // l1gt::Tau hwtau = tauv_l1[pos_matched_tau]->getHWTauGT();
             // jet_tauscoreHW_ = hwtau->hwRawId;
         }else{
             jet_taumatch_dR_ = 999.;
             jet_tauscore_ = -1.;
             jet_taupt_ = -1.;
+            jet_taueta_ = -1.;
             // jet_tauscoreHW_ = -1.;
         }
 
@@ -1323,7 +1362,19 @@ void JetNTuplizer::fill_genParticles(const edm::Event& iEvent)
   // GEN particle informatio
     if(genParticles.isValid()){
         unsigned int igen = 0;
+        TLorentzVector gen4HH;
         for (auto gens_iter = genParticles->begin(); gens_iter != genParticles->end(); ++gens_iter) {      
+
+            TLorentzVector gen4H;
+            uint countH = 0;
+            if((abs(gens_iter->pdgId()) == 25) and gens_iter->isLastCopy() and  gens_iter->statusFlags().fromHardProcess() and countH < 2){
+                countH++;
+                gen4H.SetPtEtaPhiM(gens_iter->pt(),gens_iter->eta(),gens_iter->phi(),gens_iter->mass());
+                gen4HH = gen4HH + gen4H;
+                genH_mass_.push_back(gen4H.M());
+                genH_pt_.push_back(gen4H.Pt());
+                ngenH_++;
+            }
 
             if((abs(gens_iter->pdgId()) == 25 or abs(gens_iter->pdgId()) == 24 or abs(gens_iter->pdgId()) == 23) and
             gens_iter->isLastCopy() and 
@@ -1407,6 +1458,9 @@ void JetNTuplizer::fill_genParticles(const edm::Event& iEvent)
                 igen++;
             }  
         }
+
+        genHH_mass_ = gen4HH.M();
+        genHH_pt_ = gen4HH.Pt();
     }
 
 
