@@ -11,7 +11,7 @@ process.load("FWCore.MessageLogger.MessageLogger_cfi")
 process.options   = cms.untracked.PSet( wantSummary = cms.untracked.bool(False), allowUnscheduled = cms.untracked.bool(False) )
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1))
 process.MessageLogger.cerr.FwkReport.reportEvery = 1
-inputMC = ['file:/eos/cms/store/cmst3/group/l1tr/FastPUPPI/14_2_X/fpinputs_140X/v0/TT_PU200/inputs140X_1.root']
+inputMC = ['file:/eos/cms/store/cmst3/group/l1tr/FastPUPPI/14_2_X/fpinputs_140X/v0/TT_PU200/inputs140X_18.root']
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(*inputMC),
     inputCommands = cms.untracked.vstring("keep *", 
@@ -61,6 +61,9 @@ def addJetNTuple(trktype = "extended", nparam = 5, tagged = True):
     if trktype == "baseline":
         jetColl = "l1tSC4PFL1PuppiEmulator"
         jetCollCorr = "l1tSC4PFL1PuppiCorrectedEmulator"
+        process.l1tPFTracksFromL1Tracks.nParam = cms.uint32(nparam)
+    else:
+        process.l1tPFTracksFromL1TracksExtended.nParam = cms.uint32(nparam)
     if tagged:
         jetColl = ("l1tSC4NGJetProducerPuppi","l1tSC4NGJets")
         jetCollCorr = "l1tSC4PFL1PuppiCorrectedEmulator"
