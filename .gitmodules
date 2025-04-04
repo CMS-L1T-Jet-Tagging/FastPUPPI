@@ -1,0 +1,7 @@
+[submodule "mrCrabs"]
+	path = mrCrabs
+	url = https://github.com/CMS-L1T-Jet-Tagging/mrCrabs.git
+[submodule "submission"]
+	path = submission
+	url = https://github.com/CMS-L1T-Jet-Tagging/submission
+	branch = dev/14_2_X
