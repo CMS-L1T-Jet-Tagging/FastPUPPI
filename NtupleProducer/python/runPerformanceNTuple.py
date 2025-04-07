@@ -16,7 +16,7 @@ process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1))
 process.MessageLogger.cerr.FwkReport.reportEvery = 1
 
 process.source = cms.Source("PoolSource",
-    fileNames = cms.untracked.vstring('file:inputs125X.root'),
+    fileNames = cms.untracked.vstring('file:/eos/cms/store/cmst3/group/l1tr/FastPUPPI/14_2_X/fpinputs_140X/v0/TT_PU200/inputs140X_18.root'),
     inputCommands = cms.untracked.vstring("keep *", 
             "drop l1tPFClusters_*_*_*",
             "drop l1tPFTracks_*_*_*",
@@ -153,7 +153,7 @@ process.l1pfjetTaggerTable = cms.EDProducer("L1PFJetTableProducer",
     drMax = cms.double(0.2),
     minRecoPtOverGenPt = cms.double(0.1),
     jets = cms.PSet(
-        scPuppiL1TSC4NGJet = cms.InputTag("l1tSC4NGJetProducerPuppi","l1tSC4NGJets")
+        scPuppiL1TSC4NGJet = cms.InputTag("l1tSC4NGJetProducer","l1tSC4NGJets")
     ),
     moreVariables = cms.PSet(),
 )
@@ -270,16 +270,13 @@ def addNNPuppiTaus():
     process.l1pfjetTable.jets.nnPuppiTau = cms.InputTag('l1tNNTauProducerPuppi', "L1PFTausNN")
 
 def addMultitagging(): #extended TRK
-    process.l1tSC4NGJetProducerPuppiCorrectedEmulator.jets = cms.InputTag("l1tSC4PFL1PuppiExtendedEmulator")
-    process.l1tSC4NGJetProducerPuppiCorrectedEmulator.maxJets = cms.int32(500)
-    process.l1tSC4NGJetProducerPuppiCorrectedEmulator.l1tSC4NGJetModelPath = cms.string(os.environ['CMSSW_BASE']+"/src/L1TSC4NGJetModel/L1TSC4NGJetModel")
-    process.extraPFStuff.add(process.l1tSC4NGJetTask)
     for i in range(8): 
         setattr(process.l1pfjetTaggerTable.moreVariables, "tagScore_%s" % (i), cms.string("getTagScores()[%s]"  % (i)))
 
 
 def addSeededConeJets():
     process.extraPFStuff.add(process.L1TPFJetsTask)
+    process.extraPFStuff.add(process.L1TPFJetsExtendedTask)
     process.l1pfjetTable.jets.scPuppiSim = cms.InputTag('l1tSC4PFL1Puppi')
     process.l1pfjetTable.jets.scPuppi = cms.InputTag('l1tSC4PFL1PuppiEmulator')
     process.l1pfjetTable.jets.scPuppiCorr = cms.InputTag('l1tSC4PFL1PuppiCorrectedEmulator')

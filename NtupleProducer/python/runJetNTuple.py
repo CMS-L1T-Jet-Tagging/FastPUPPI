@@ -65,7 +65,7 @@ def addJetNTuple(trktype = "extended", nparam = 5, tagged = True):
     else:
         process.l1tPFTracksFromL1TracksExtended.nParam = cms.uint32(nparam)
     if tagged:
-        jetColl = ("l1tSC4NGJetProducerPuppi","l1tSC4NGJets")
+        jetColl = ("l1tSC4NGJetProducer","l1tSC4NGJets")
         jetCollCorr = "l1tSC4PFL1PuppiCorrectedEmulator"
 
     process.outnano = cms.EDAnalyzer("JetNTuplizer",
@@ -89,7 +89,7 @@ process.p = cms.Path()
 process.p.associate(process.extraPFStuff)
 process.p.associate(process.L1TPFJetsExtendedTask)
 process.p.associate(process.L1TBJetsTask)
-process.p.associate(process.l1tSC4NGJetTask)
+#process.p.associate(process.l1tSC4NGJetTask)
 process.TFileService = cms.Service("TFileService", fileName = cms.string("jetTuple.root"))
 
 def addNNPuppiTaus():
@@ -102,14 +102,13 @@ def addSeededConeJets():
     process.extraPFStuff.add(process.L1TPFJetsExtendedTask)
 
 def addMultitagging(trktype = "extended"):
-    process.load("L1Trigger.Phase2L1ParticleFlow.l1tSC4NGJetProducer_cff")
     if trktype == "extended":
-        process.l1tSC4NGJetProducerPuppi.jets = cms.InputTag("l1tSC4PFL1PuppiExtendedEmulator")
+        process.l1tSC4NGJetProducer.jets = cms.InputTag("l1tSC4PFL1PuppiExtendedEmulator")
     else:
-        process.l1tSC4NGJetProducerPuppi.jets = cms.InputTag("l1tSC4PFL1PuppiEmulator")
-    process.l1tSC4NGJetProducerPuppi.maxJets = cms.int32(500)
-    process.l1tSC4NGJetProducerPuppi.l1tSC4NGJetModelPath = cms.string(os.environ['CMSSW_BASE']+"/src/L1TSC4NGJetModel/L1TSC4NGJetModel")
-    process.extraPFStuff.add(process.l1tSC4NGJetTask)
+        process.l1tSC4NGJetProducer.jets = cms.InputTag("l1tSC4PFL1PuppiEmulator")
+    process.l1tSC4NGJetProducer.maxJets = cms.int32(500)
+    process.l1tSC4NGJetProducer.l1tSC4NGJetModelPath = cms.string(os.environ['CMSSW_BASE']+"/src/L1TSC4NGJetModel/L1TSC4NGJetModel_v0")
+    process.extraPFStuff.add(process.l1tSC4NGJetProducer)
 
 def addBtagging(jetColl): #extended TRK
     process.load("L1Trigger.Phase2L1ParticleFlow.L1BJetProducer_cff")
@@ -138,7 +137,7 @@ if True:
     nparam = 5
     addSeededConeJets()
     addMultitagging(trktype = trktype)
-    addBtagging(("l1tSC4NGJetProducerPuppi","l1tSC4NGJets"))
+    addBtagging(("l1tSC4NGJetProducer","l1tSC4NGJets"))
     addNNPuppiTaus()
     addGenJetFlavourTable()
     addJetNTuple(trktype = trktype, nparam = nparam)
