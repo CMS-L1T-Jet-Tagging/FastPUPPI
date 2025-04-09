@@ -719,12 +719,12 @@ JetNTuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         float score_electron = -999;
         float score_regression = 1;
         if (tagScores.size() > 0){
-            score_light = tagScores[2];
             score_b = tagScores[0];
+            score_charm = tagScores[1];
+            score_light = tagScores[2];
+            score_gluon = tagScores[3];
             score_taup = tagScores[4];
             score_taum = tagScores[5];
-            score_gluon = tagScores[3];
-            score_charm = tagScores[1];
             score_muon = tagScores[6];
             score_electron = tagScores[7];
             score_regression = jetv_l1[i]->getPtCorrection();
