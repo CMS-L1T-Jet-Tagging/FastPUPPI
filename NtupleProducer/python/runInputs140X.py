@@ -41,8 +41,8 @@ process.source = cms.Source("PoolSource",
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(20))
 process.options = cms.untracked.PSet(
         wantSummary = cms.untracked.bool(True),
-        #numberOfThreads = cms.untracked.uint32(4),
-        #numberOfStreams = cms.untracked.uint32(4),
+        numberOfThreads = cms.untracked.uint32(4),
+        numberOfStreams = cms.untracked.uint32(4),
 )
 
 process.PFInputsTask = cms.Task(
@@ -158,3 +158,11 @@ process.e = cms.EndPath(process.out)
 process.schedule = cms.Schedule([process.p,process.e])
 
 process.out.outputCommands += [ "drop *_l1tHGCalVFEProducer_*_*", ]
+
+if process.l1tSC4NGJetTask:
+    process.SimL1EmulatorTask.remove(process.l1tSC4NGJetTask)
+    del process.l1tSC4NGJetProducer
+    del process.l1tSC4NGJetProducerPuppi
+    del process.l1tSC4NGJetProducerPuppiCorrectedEmulator
+    del process.l1tSC4NGJetTask
+    # open("debug_dump_runInputs140X.py", "w").write(process.dumpPython())
