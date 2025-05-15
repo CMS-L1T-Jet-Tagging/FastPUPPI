@@ -159,10 +159,6 @@ process.schedule = cms.Schedule([process.p,process.e])
 
 process.out.outputCommands += [ "drop *_l1tHGCalVFEProducer_*_*", ]
 
-if process.l1tSC4NGJetTask:
-    process.SimL1EmulatorTask.remove(process.l1tSC4NGJetTask)
+if process.L1TPFJetsExtendedTask:
+    process.SimL1EmulatorTask.remove(process.l1tSC4NGJetProducer)
     del process.l1tSC4NGJetProducer
-    del process.l1tSC4NGJetProducerPuppi
-    del process.l1tSC4NGJetProducerPuppiCorrectedEmulator
-    del process.l1tSC4NGJetTask
-    # open("debug_dump_runInputs140X.py", "w").write(process.dumpPython())
