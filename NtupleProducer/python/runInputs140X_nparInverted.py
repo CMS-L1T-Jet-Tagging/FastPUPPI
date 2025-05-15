@@ -3,8 +3,8 @@ from Configuration.StandardSequences.Eras import eras
 
 process = cms.Process("IN", eras.Phase2C17I13M9)
 process.load('Configuration.StandardSequences.Services_cff')
-process.load('Configuration.Geometry.GeometryExtended2026D110Reco_cff')
-process.load('Configuration.Geometry.GeometryExtended2026D110_cff')
+process.load('Configuration.Geometry.GeometryExtendedRun4D110Reco_cff')
+process.load('Configuration.Geometry.GeometryExtendedRun4D110_cff')
 process.load('Configuration.StandardSequences.MagneticField_cff')
 process.load('SimGeneral.MixingModule.mixNoPU_cfi')
 process.load('Configuration.StandardSequences.EndOfProcess_cff')
@@ -41,8 +41,8 @@ process.source = cms.Source("PoolSource",
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(20))
 process.options = cms.untracked.PSet(
         wantSummary = cms.untracked.bool(True),
-        #numberOfThreads = cms.untracked.uint32(4),
-        #numberOfStreams = cms.untracked.uint32(4),
+        numberOfThreads = cms.untracked.uint32(4),
+        numberOfStreams = cms.untracked.uint32(4),
 )
 
 process.PFInputsTask = cms.Task(
@@ -167,3 +167,11 @@ def modifyTracking():
 modifyTracking()
 if False:
     open("debug_dump_runInputs140X_npar4.py", "w").write(process.dumpPython())
+
+if process.l1tSC4NGJetTask:
+    process.SimL1EmulatorTask.remove(process.l1tSC4NGJetTask)
+    del process.l1tSC4NGJetProducer
+    del process.l1tSC4NGJetProducerPuppi
+    del process.l1tSC4NGJetProducerPuppiCorrectedEmulator
+    del process.l1tSC4NGJetTask
+    # open("debug_dump_runInputs140X.py", "w").write(process.dumpPython())
