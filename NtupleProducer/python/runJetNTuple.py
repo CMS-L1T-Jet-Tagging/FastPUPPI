@@ -11,7 +11,7 @@ process.load("FWCore.MessageLogger.MessageLogger_cfi")
 process.options   = cms.untracked.PSet( wantSummary = cms.untracked.bool(False), allowUnscheduled = cms.untracked.bool(False) )
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1))
 process.MessageLogger.cerr.FwkReport.reportEvery = 1
-inputMC = ['file:/eos/cms/store/cmst3/group/l1tr/FastPUPPI/14_2_X/fpinputs_140X/v0/TT_PU200/inputs140X_18.root']
+inputMC = ['file:/eos/cms/store/cmst3/group/l1tr/FastPUPPI/15_1_X/fpinputs_140X/v0/GluGluHHTo2B2Tau_PU200/inputs140X_1-1.root']
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(*inputMC),
     inputCommands = cms.untracked.vstring("keep *", 
