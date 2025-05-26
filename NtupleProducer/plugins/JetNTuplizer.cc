@@ -1156,16 +1156,7 @@ JetNTuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                                       : L1SCJetEmu::detaphi_t(puppi_dphi);
             float puppi_dphiw = puppi_dphi > L1SCJetEmu::detaphi_t(0) ? puppi_dphi0 : puppi_dphi1;
 
-            float puppi_massCand = 0.13f;
-            if (abs(puppicand.hwId.charged())) {
-            if ((puppicand.hwId.bits == l1t::PFCandidate::Muon)) {
-                puppi_massCand = 0.105;
-            } else if ((puppicand.hwId.bits == l1t::PFCandidate::Electron)) {
-                puppi_massCand = 0.005;
-            }
-            } else {
-            puppi_massCand = puppicand.hwId.bits == l1t::PFCandidate::Photon ? 0.0 : 0.5;
-            }
+            float puppi_massCand  = L1TSC4NGJet::candidate_mass<float>(puppicand);
 
             jet_puppicand_pt.push_back(puppicand.hwPt);
             jet_puppicand_pt_rel.push_back(float(L1TSC4NGJetID::inputtype(puppicand.hwPt) * inv_jet_pt));
@@ -1214,6 +1205,7 @@ JetNTuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             jet_pfcand_phi.push_back(float(pfcand.hwPhi()));
             jet_pfcand_phi_phys.push_back(pfcand.phi());
 
+            
             float massCand = 0.13f;
             if (abs(pfcand.charge())) {
                 if ((pfcand.id() == l1t::PFCandidate::Muon)) {
