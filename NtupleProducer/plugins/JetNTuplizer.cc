@@ -17,6 +17,8 @@
 //
 
 // user include files
+#include "ap_fixed.h"
+
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/one/EDAnalyzer.h"
 
@@ -43,6 +45,10 @@
 #include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
 
 #include "L1Trigger/Phase2L1ParticleFlow/interface/L1TPFUtils.h"
+#include "L1Trigger/Phase2L1ParticleFlow/interface/common/inversion.h"
+#include "L1Trigger/Phase2L1ParticleFlow/interface/common/log.h"
+
+
 #include "CommonTools/Utils/interface/StringCutObjectSelector.h"
 
 #include "DataFormats/L1TParticleFlow/interface/PFCandidate.h"
@@ -304,6 +310,7 @@ class JetNTuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::
     std::vector<float> jet_puppicand_pt; 
     std::vector<float> jet_puppicand_pt_rel; 
     std::vector<float> jet_puppicand_pt_log; 
+    std::vector<float> jet_puppicand_float_pt_log;
     std::vector<float> jet_puppicand_deta; 
     std::vector<float> jet_puppicand_dphi; 
     std::vector<float> jet_puppicand_mass; 
@@ -494,6 +501,7 @@ JetNTuplizer::JetNTuplizer(const edm::ParameterSet& iConfig) :
     tree_->Branch("jet_puppicand_pt", &jet_puppicand_pt, njet_pfcand_); 
     tree_->Branch("jet_puppicand_pt_rel",&jet_puppicand_pt_rel, njet_pfcand_);
     tree_->Branch("jet_puppicand_pt_log",&jet_puppicand_pt_log, njet_pfcand_); 
+    tree_->Branch("jet_puppicand_float_pt_log",&jet_puppicand_float_pt_log, njet_pfcand_);
     tree_->Branch("jet_puppicand_deta",&jet_puppicand_deta, njet_pfcand_); 
     tree_->Branch("jet_puppicand_dphi",&jet_puppicand_dphi, njet_pfcand_); 
     tree_->Branch("jet_puppicand_mass",&jet_puppicand_mass, njet_pfcand_); 
@@ -1032,6 +1040,7 @@ JetNTuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         jet_puppicand_pt.clear(); 
         jet_puppicand_pt_rel.clear(); 
         jet_puppicand_pt_log.clear(); 
+        jet_puppicand_float_pt_log.clear();
         jet_puppicand_deta.clear(); 
         jet_puppicand_dphi.clear(); 
         jet_puppicand_mass.clear(); 
@@ -1144,7 +1153,10 @@ JetNTuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             l1ct::PuppiObj puppicand = l1ct::PuppiObj::unpack(pfcand.encodedPuppi64());
 
             constexpr int INV_LUT_SIZE = 256;
-            L1TSC4NGJetID::inputtype inv_jet_pt = L1TSC4NGJet::invert_with_shift<L1TSC4NGJetID::inputtype, L1TSC4NGJetID::inputtype, INV_LUT_SIZE>(jet_pt_);
+            L1TSC4NGJetID::inputtype inv_jet_pt = l1ct::invert_with_shift<L1TSC4NGJetID::inputtype, L1TSC4NGJetID::inputtype, INV_LUT_SIZE>(jet_pt_);
+            
+            constexpr int LOG_LUT_SIZE = 2048;
+            L1TSC4NGJetID::inputtype log_jet_pt = l1ct::log_with_shift<l1ct::pt_t,L1TSC4NGJetID::inputtype, LOG_LUT_SIZE>(puppicand.hwPt);
 
             L1SCJetEmu::detaphi_t puppi_dphi(puppicand.hwPhi - jet_phi_);
             // phi wrap
@@ -1160,7 +1172,10 @@ JetNTuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
             jet_puppicand_pt.push_back(puppicand.hwPt);
             jet_puppicand_pt_rel.push_back(float(L1TSC4NGJetID::inputtype(puppicand.hwPt) * inv_jet_pt));
-            jet_puppicand_pt_log.push_back(std::log(float(puppicand.hwPt)));
+
+            jet_puppicand_pt_log.push_back(log_jet_pt);
+            jet_puppicand_float_pt_log.push_back(std::log(float(puppicand.hwPt)));
+
             jet_puppicand_deta.push_back(jet_eta_ - puppicand.hwEta);
             jet_puppicand_dphi.push_back(puppi_dphiw);
 
