@@ -309,9 +309,13 @@ def addNNPuppiTaus():
 
 def addMultitagging(): #extended TRK
     classes = process.l1tSC4NGJetProducer.classes
-    process.l1tSC4NGJetProducer.l1tSC4NGJetModelPath = cms.string(os.environ['CMSSW_BASE']+"/src/L1TSC4NGJetModel/L1TSC4NGJetModel_v0")
+    #process.l1tSC4NGJetProducer.l1tSC4NGJetModelPath = cms.string(os.environ['CMSSW_BASE']+"/src/L1TSC4NGJetModel/L1TSC4NGJetModel_v0")
     for i in range(8): 
         setattr(process.l1pfjetTaggerTable.moreVariables, "tagScore_%s" % (classes[i]), cms.string("getTagScores()[%s]"  % (i)))
+        
+    process.l1tSC4NGJetProducer.doJEC = cms.bool(True)
+    process.l1tSC4NGJetProducer.correctorFile = cms.string("L1Trigger/Phase2L1ParticleFlow/data/jecs/jecs_20220308.root")
+    process.l1tSC4NGJetProducer.correctorDir = cms.string("L1PuppiSC4EmuJets")
 
 def addSeededConeJets():
     process.extraPFStuff.add(process.L1TPFJetsTask)
@@ -864,3 +868,6 @@ def saveGenCands():
                                            ),
                                       )
     process.p += process.gencandTable
+    
+    
+addAllJets()

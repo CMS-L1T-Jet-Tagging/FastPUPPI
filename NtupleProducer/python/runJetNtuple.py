@@ -104,49 +104,6 @@ process.p.associate(process.L1TBJetsTask)
 #process.p.associate(process.l1tSC4NGJetTask)
 process.TFileService = cms.Service("TFileService", fileName = cms.string("jetTuple.root"))
 
-def addCalib():
-    process.load("L1Trigger.Phase2L1ParticleFlow.l1tPFClustersFromHGC3DClustersEM_cfi")
-
-
-    process.l1tLayer1BarrelRaw = process.l1tLayer1Barrel.clone(
-        gctEmInputConversionParameters = process.l1tLayer1Barrel.gctEmInputConversionParameters.clone(
-            gctEmCorrector = cms.string("")
-        )
-    )
-
-
-    process.l1tLayer1HGCalRaw = process.l1tLayer1HGCal.clone(
-        hgcalInputConversionParameters = process.l1tLayer1HGCal.hgcalInputConversionParameters.clone(
-            corrector= cms.string("")
-            )
-        )
-    process.l1tLayer1HGCalNoTKRaw = process.l1tLayer1HGCalNoTK.clone(
-        hgcalInputConversionParameters = process.l1tLayer1HGCalNoTK.hgcalInputConversionParameters.clone(
-            corrector= cms.string("")
-            )
-        )
-
-    process.extraPFStuff.add(
-        process.l1tLayer1BarrelRaw,
-        process.l1tLayer1HGCalRaw,
-        process.l1tLayer1HGCalNoTKRaw
-    )
-
-    #uncalibrated
-    process.ntuple.objects.L1RawBarrelEcal   = cms.VInputTag('l1tLayer1BarrelRaw:DecodedEmClusters')
-    process.ntuple.objects.L1RawBarrelCalo   = cms.VInputTag('l1tPFClustersFromCombinedCaloHCal:uncalibrated')
-    process.ntuple.objects.L1RawHGCal   = cms.VInputTag('l1tLayer1HGCalRaw:DecodedHadClusters', 'l1tLayer1HGCalNoTKRaw:DecodedHadClusters')#use only this, try to understand if you have to use emf or emf_tot
-    process.ntuple.objects.L1RawHGCalEM = cms.VInputTag('l1tLayer1HGCalRaw:DecodedEmClusters', 'l1tLayer1HGCalNoTKRaw:DecodedEmClusters')
-    process.ntuple.objects.L1RawHFCalo  = cms.VInputTag('l1tPFClustersFromCombinedCaloHF:uncalibrated')
-
-    #calibrated
-    #process.ntuple.objects.L1BarrelEcal = cms.VInputTag('l1tPFClustersFromL1EGClusters' ) #Change IT. calibrated decodedEmClu in barrel not available
-    #process.ntuple.objects.L1BarrelCalo = cms.VInputTag('l1tPFClustersFromCombinedCaloHCal:calibrated')
-    #process.ntuple.objects.L1HGCal   = cms.VInputTag('l1tPFClustersFromHGC3DClusters')
-    #process.ntuple.objects.L1HFCalo  = cms.VInputTag('l1tPFClustersFromCombinedCaloHF:calibrated')
-    #process.ntuple.objects.L1HGCalEM = cms.VInputTag('l1tPFClustersFromHGC3DClustersEM', )
-
-
 def addNNPuppiTaus():
     process.load("L1Trigger.Phase2L1ParticleFlow.L1NNTauProducer_cff")
     process.l1tNNTauProducerPuppi.maxtaus = cms.int32(500)
@@ -162,7 +119,7 @@ def addMultitagging(trktype = "extended"):
     else:
         process.l1tSC4NGJetProducer.jets = cms.InputTag("l1tSC4PFL1PuppiEmulator")
     process.l1tSC4NGJetProducer.maxJets = cms.int32(500)
-    process.l1tSC4NGJetProducer.l1tSC4NGJetModelPath = cms.string(os.environ['CMSSW_BASE']+"/src/L1TSC4NGJetModel/L1TSC4NGJetModel_v0")
+    #process.l1tSC4NGJetProducer.l1tSC4NGJetModelPath = cms.string(os.environ['CMSSW_BASE']+"/src/L1TSC4NGJetModel/L1TSC4NGJetModel_v0")
     process.extraPFStuff.add(process.l1tSC4NGJetProducer)
     process.l1tSC4NGJetProducer.doJEC = cms.bool(True)
     process.l1tSC4NGJetProducer.correctorFile = cms.string("L1Trigger/Phase2L1ParticleFlow/data/jecs/jecs_20220308.root")
