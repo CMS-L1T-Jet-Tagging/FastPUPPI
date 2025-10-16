@@ -16,7 +16,8 @@ process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1))
 process.MessageLogger.cerr.FwkReport.reportEvery = 1
 
 process.source = cms.Source("PoolSource",
-    fileNames = cms.untracked.vstring('file:inputs125X.root'),
+    #fileNames = cms.untracked.vstring('file:inputs125X.root'),
+    fileNames = cms.untracked.vstring('file:/eos/cms/store/cmst3/group/l1tr/FastPUPPI/15_1_X/fpinputs_140X/v0/GluGluHHTo2B2Tau_PU200/inputs140X_1-1.root'),
     inputCommands = cms.untracked.vstring("keep *", 
             "drop l1tPFClusters_*_*_*",
             "drop l1tPFTracks_*_*_*",
@@ -160,6 +161,17 @@ process.l1pfjetTable = cms.EDProducer("L1PFJetTableProducer",
     ),
 )
 
+process.l1pfjetTaggerTable = cms.EDProducer("L1PFJetTableProducer",
+    gen = cms.InputTag("ak4GenJetsNoNu"),
+    commonSel = cms.string("pt > 5 && abs(eta) < 5.0"),
+    drMax = cms.double(0.2),
+    minRecoPtOverGenPt = cms.double(0.1),
+    jets = cms.PSet(
+        scPuppiL1TSC4NGJet = cms.InputTag("l1tSC4NGJetProducer","l1tSC4NGJets")
+    ),
+    moreVariables = cms.PSet(),
+)
+
 process.l1pfmetTable = cms.EDProducer("L1PFMetTableProducer",
     genMet = cms.InputTag("genMetTrue"), 
     flavour = cms.string(""),
@@ -178,6 +190,7 @@ monitorPerf("L1Puppi", "l1tLayer1:Puppi")
 process.p = cms.Path(
         process.ntuple + #process.content +
         process.l1pfjetTable + 
+        process.l1pfjetTaggerTable +
         process.l1pfmetTable + process.l1pfmetCentralTable
         )
 process.p.associate(process.extraPFStuff)
@@ -292,9 +305,17 @@ def addCalib():
 def addNNPuppiTaus():
     process.extraPFStuff.add(process.l1tNNTauProducerPuppi)
     process.l1pfjetTable.jets.nnPuppiTau = cms.InputTag('l1tNNTauProducerPuppi', "L1PFTausNN")
+    
+
+def addMultitagging(): #extended TRK
+    classes = process.l1tSC4NGJetProducer.classes
+    process.l1tSC4NGJetProducer.l1tSC4NGJetModelPath = cms.string(os.environ['CMSSW_BASE']+"/src/L1TSC4NGJetModel/L1TSC4NGJetModel_v0")
+    for i in range(8): 
+        setattr(process.l1pfjetTaggerTable.moreVariables, "tagScore_%s" % (classes[i]), cms.string("getTagScores()[%s]"  % (i)))
 
 def addSeededConeJets():
     process.extraPFStuff.add(process.L1TPFJetsTask)
+    process.extraPFStuff.add(process.L1TPFJetsExtendedTask)
     process.l1pfjetTable.jets.scPuppiSim = cms.InputTag('l1tSC4PFL1Puppi')
     process.l1pfjetTable.jets.scPuppi = cms.InputTag('l1tSC4PFL1PuppiEmulator')
     process.l1pfjetTable.jets.scPuppiCorr = cms.InputTag('l1tSC4PFL1PuppiCorrectedEmulator')
@@ -322,6 +343,7 @@ def addTkJets():
 
 def addAllJets():
     addSeededConeJets()
+    addMultitagging()
     addPhase1Jets()
     addCaloJets()
     #addTkJets()
