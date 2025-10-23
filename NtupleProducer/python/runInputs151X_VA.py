@@ -28,6 +28,7 @@ process.source = cms.Source("PoolSource",
         # '/store/mc/Phase2Spring24DIGIRECOMiniAOD/TTToSemileptonic_TuneCP5_14TeV-powheg-pythia8/GEN-SIM-DIGI-RAW-MINIAOD/PU200_Trk1GeV_140X_mcRun4_realistic_v4-v2/2820000/5b6178a7-19bf-4f7f-af63-5bab03393e54.root',        
         # '/store/mc/Phase2Spring23DIGIRECOMiniAOD/MinBias_TuneCP5_14TeV-pythia8/GEN-SIM-DIGI-RAW-MINIAOD/PU200_Trk1GeV_131X_mcRun4_realistic_v5-v1/30002/3b44d52d-1807-4a4f-9b9b-19466303a741.root',
 '/store/mc/Phase2Spring24DIGIRECOMiniAOD/SingleElectron_Pt-2To200-gun/GEN-SIM-DIGI-RAW-MINIAOD/PU200_Trk1GeV_140X_mcRun4_realistic_v4-v1/2560000/c598c5a7-d4d8-489d-bbc7-43fe9aa6b350.root'
+
 ),
 
     inputCommands = cms.untracked.vstring(
@@ -44,7 +45,7 @@ process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(20))
 process.options = cms.untracked.PSet(
         wantSummary = cms.untracked.bool(True),
         numberOfThreads = cms.untracked.uint32(4),
-        # numberOfStreams = cms.untracked.uint32(4),
+        #numberOfStreams = cms.untracked.uint32(4),
 )
 
 process.PFInputsTask = cms.Task(
@@ -70,7 +71,7 @@ process.p.associate(process.PFInputsTask)
 process.p.associate(process.SimL1EmulatorTask)
 
 process.out = cms.OutputModule("PoolOutputModule",
-        fileName = cms.untracked.string("inputs151X_nparInverted.root"),
+        fileName = cms.untracked.string("inputs151X_VA.root"),
         outputCommands = cms.untracked.vstring("drop *",
             # --- GEN
             "keep *_genParticles_*_*",
@@ -173,10 +174,16 @@ process.schedule = cms.Schedule([process.p,process.e])
 
 process.out.outputCommands += [ "drop *_l1tHGCalVFEProducer_*_*", ]
 
-# invert the number of track parameters: 4 for extended, 5 for default
-def invertTracking():
-    process.l1tTTTracksFromTrackletEmulation.Hnpar = cms.uint32(5)
-    process.l1tTTTracksFromExtendedTrackletEmulation.Hnpar = cms.uint32(4)
 
-# set to inverted (extended/default) nParameters
-invertTracking()
+def SetVertexAssociation():
+    # turn "useMLAssociation" on everywhere, and set VertexReconstruction to "NNEmulation"
+    process.l1tLayer1Barrel.puAlgoParameters.useMLAssociation = cms.bool(True)
+    process.l1tLayer1BarrelExtended.puAlgoParameters.useMLAssociation = cms.bool(True)
+    process.l1tLayer1HGCal.puAlgoParameters.useMLAssociation = cms.bool(True)
+    process.l1tLayer1HGCalExtended.puAlgoParameters.useMLAssociation = cms.bool(True)
+    process.l1tLayer1HGCalElliptic.puAlgoParameters.useMLAssociation = cms.bool(True)
+    process.l1tLayer1HGCalNoTK.puAlgoParameters.useMLAssociation = cms.bool(True)
+    process.l1tLayer1HF.puAlgoParameters.useMLAssociation = cms.bool(True)
+    process.l1tVertexFinderEmulator.VertexReconstruction.Algorithm = cms.string("NNEmulation")
+
+SetVertexAssociation()
