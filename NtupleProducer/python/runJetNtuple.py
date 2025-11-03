@@ -32,6 +32,12 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 process.load('RecoMET.Configuration.GenMETParticles_cff')
 process.load('RecoMET.METProducers.genMetTrue_cfi')
 
+# for offline btagging
+from RecoBTag.ONNXRuntime.boostedJetONNXJetTagsProducer_cfi import boostedJetONNXJetTagsProducer
+from RecoBTag.FeatureTools.ParticleNetFeatureEvaluator_cfi import ParticleNetFeatureEvaluator
+from RecoBTag.ONNXRuntime.pfParticleNetFromMiniAODAK4DiscriminatorsJetTags_cfi import *
+process.load("TrackingTools/TransientTrack/TransientTrackBuilder_cfi")
+
 from RecoJets.JetProducers.ak4PFJets_cfi import ak4PFJets
 from RecoMET.METProducers.pfMet_cfi import pfMet
 
@@ -76,9 +82,16 @@ def addJetNTuple(trktype = "extended", nparam = 5, tagged = True):
         process.l1tPFTracksFromL1Tracks.nParam = cms.uint32(nparam)
     else:
         process.l1tPFTracksFromL1TracksExtended.nParam = cms.uint32(nparam)
+    # run NGJets as default
     if tagged:
         jetColl = ("l1tSC4NGJetProducer","l1tSC4NGJets")
         jetCollCorr = "l1tSC4PFL1PuppiCorrectedEmulator"
+        if trktype == "baseline":
+            process.l1tSC4NGJetProducer.jets = cms.InputTag("l1tSC4PFL1PuppiEmulator")
+        elif trktype == "extended":
+            process.l1tSC4NGJetProducer.jets = cms.InputTag("l1tSC4PFL1PuppiExtendedEmulator")
+
+    process.l1tSC4NGJetProducer.returnRawPt = cms.bool(True)
 
     process.outnano = cms.EDAnalyzer("JetNTuplizer",
         genJets = cms.InputTag("ak4GenJetsNoNu"),
@@ -91,7 +104,13 @@ def addJetNTuple(trktype = "extended", nparam = 5, tagged = True):
         bjetIDs = cms.InputTag("l1tBJetProducerPuppiCorrectedEmulator", "L1PFBJets"),
         electrons = cms.InputTag("l1tLayer2EG","L1CtTkElectron"),
         muons = cms.InputTag("l1tSAMuonsGmt","promptSAMuons"),
+        offlineJets = cms.InputTag("slimmedJetsPuppi"),
+        offlinePVs = cms.InputTag("offlineSlimmedPrimaryVertices"),
     )
+
+    if hasattr(process, "slimmedJetsUpdated"):
+        process.outnano.offlineJets = cms.InputTag("slimmedJetsUpdated")
+
     process.endTuple = cms.EndPath(process.outnano)
     outName = "jetTuple_"+trktype+"_"+str(nparam)+".root"
     process.TFileService = cms.Service("TFileService", fileName = cms.string(outName))
@@ -124,6 +143,9 @@ def addMultitagging(trktype = "extended"):
     process.l1tSC4NGJetProducer.doJEC = cms.bool(True)
     process.l1tSC4NGJetProducer.correctorFile = cms.string("L1Trigger/Phase2L1ParticleFlow/data/jecs/jecs_20220308.root")
     process.l1tSC4NGJetProducer.correctorDir = cms.string("L1PuppiSC4EmuJets")
+    process.l1tSC4NGJetProducer.minPt = cms.double(0.)
+    process.l1tSC4NGJetProducer.maxEta = cms.double(99.)
+    process.l1tSC4NGJetProducer.maxJets = cms.int32(999)
 
 def addBtagging(jetColl): #extended TRK
     process.load("L1Trigger.Phase2L1ParticleFlow.L1BJetProducer_cff")
@@ -145,6 +167,105 @@ def goMT(nthreads=1):
     process.options.numberOfThreads = cms.untracked.uint32(nthreads)
     process.options.numberOfStreams = cms.untracked.uint32(0)
 
+def addOfflineBTagging():
+    process.pfParticleNetFromMiniAODAK4PuppiCentralTagInfos = ParticleNetFeatureEvaluator.clone(
+        jets = "slimmedJetsPuppi",
+        jet_radius = 0.4,
+        min_jet_pt = 0.,
+        min_jet_eta = 0.,
+        max_jet_eta = 2.5,
+    )
+
+    process.pfParticleNetFromMiniAODAK4PuppiForwardTagInfos = ParticleNetFeatureEvaluator.clone(
+        jets = "slimmedJetsPuppi",
+        jet_radius = 0.4,
+        min_jet_pt = 0.,
+        min_jet_eta = 2.5,
+        max_jet_eta = 5.0,
+    )
+
+    process.pfParticleNetFromMiniAODAK4PuppiCentralTagInfos.puppi_value_map = cms.InputTag("") # edm::ValueMap<float> "puppi" doesn't exist in our miniAOD, let's try without it
+    process.pfParticleNetFromMiniAODAK4PuppiForwardTagInfos.puppi_value_map = cms.InputTag("") # edm::ValueMap<float> "puppi" doesn't exist in our miniAOD, let's try without it
+    process.pfParticleNetFromMiniAODAK4PuppiCentralTagInfos.fallback_puppi_weight = cms.bool(True)
+    process.pfParticleNetFromMiniAODAK4PuppiForwardTagInfos.fallback_puppi_weight = cms.bool(True)
+
+    process.pfParticleNetFromMiniAODAK4PuppiCentralJetTags = boostedJetONNXJetTagsProducer.clone(
+        src = 'pfParticleNetFromMiniAODAK4PuppiCentralTagInfos',
+        preprocess_json = 'RecoBTag/Combined/data/ParticleNetFromMiniAODAK4/PUPPI/Central/preprocess.json',
+        model_path = 'RecoBTag/Combined/data/ParticleNetFromMiniAODAK4/PUPPI/Central/modelfile/model.onnx',
+        flav_names = ['probmu','probele','probtaup1h0p','probtaup1h1p','probtaup1h2p','probtaup3h0p','probtaup3h1p','probtaum1h0p','probtaum1h1p','probtaum1h2p','probtaum3h0p','probtaum3h1p','probb','probc','probuds','probg','ptcorr','ptreshigh','ptreslow','ptnu'],
+    )
+    process.pfParticleNetFromMiniAODAK4PuppiForwardJetTags = boostedJetONNXJetTagsProducer.clone(
+        src = 'pfParticleNetFromMiniAODAK4PuppiForwardTagInfos',
+        preprocess_json = 'RecoBTag/Combined/data/ParticleNetFromMiniAODAK4/PUPPI/Forward/preprocess.json',
+        model_path = 'RecoBTag/Combined/data/ParticleNetFromMiniAODAK4/PUPPI/Forward/modelfile/model.onnx',
+        flav_names = ['probq','probg','ptcorr','ptreshigh','ptreslow','ptnu'],
+    )
+
+
+    from RecoBTag.ONNXRuntime.pfParticleNetFromMiniAODAK4DiscriminatorsJetTags_cfi import pfParticleNetFromMiniAODAK4PuppiCentralDiscriminatorsJetTags
+    from RecoBTag.ONNXRuntime.pfParticleNetFromMiniAODAK4DiscriminatorsJetTags_cfi import pfParticleNetFromMiniAODAK4PuppiForwardDiscriminatorsJetTags
+
+    process.pfParticleNetFromMiniAODAK4PuppiCentralDiscriminatorsJetTags = pfParticleNetFromMiniAODAK4PuppiCentralDiscriminatorsJetTags.clone()
+    process.pfParticleNetFromMiniAODAK4PuppiForwardDiscriminatorsJetTags = pfParticleNetFromMiniAODAK4PuppiForwardDiscriminatorsJetTags.clone()
+
+    process.pfParticleNetFromMiniAODAK4PuppiTask = cms.Task(process.pfParticleNetFromMiniAODAK4PuppiCentralTagInfos,
+                                                    process.pfParticleNetFromMiniAODAK4PuppiForwardTagInfos,
+                                                    process.pfParticleNetFromMiniAODAK4PuppiCentralJetTags,
+                                                    process.pfParticleNetFromMiniAODAK4PuppiForwardJetTags,
+                                                    process.pfParticleNetFromMiniAODAK4PuppiCentralDiscriminatorsJetTags,
+                                                    process.pfParticleNetFromMiniAODAK4PuppiForwardDiscriminatorsJetTags
+                                                    )
+
+    from PhysicsTools.PatAlgos.producersLayer1.jetUpdater_cfi import updatedPatJets
+    process.slimmedJetsUpdated = updatedPatJets.clone(
+        jetSource = "slimmedJetsPuppi",
+        addJetCorrFactors = False,
+        discriminatorSources = cms.VInputTag(
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probb"),
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probc"),
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probuds"),
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probg"),
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probmu"),
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probele"),
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probtaup1h0p"),
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probtaup1h1p"),
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probtaup1h2p"),
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probtaup3h0p"),
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probtaup3h1p"),
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probtaum1h0p"),
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probtaum1h1p"),
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probtaum1h2p"),
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probtaum3h0p"),
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probtaum3h1p"),
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:ptcorr"),
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:ptnu"),
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:ptreshigh"),
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:ptreslow"),
+
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiCentralDiscriminatorsJetTags:BvsAll"),
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiCentralDiscriminatorsJetTags:CvsL"),
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiCentralDiscriminatorsJetTags:CvsB"),
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiCentralDiscriminatorsJetTags:TauVsJet"),
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiCentralDiscriminatorsJetTags:TauVsEle"),
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiCentralDiscriminatorsJetTags:TauVsMu"),
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiCentralDiscriminatorsJetTags:QvsG"),
+
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiForwardJetTags:probq"),
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiForwardJetTags:probg"),
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiForwardJetTags:ptcorr"),
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiForwardJetTags:ptnu"),
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiForwardJetTags:ptreshigh"),
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiForwardJetTags:ptreslow"),
+
+            cms.InputTag("pfParticleNetFromMiniAODAK4PuppiForwardDiscriminatorsJetTags:QvsG"),
+
+        )
+    )
+    process.slimmedJetsUpdatedTask = cms.Task(process.slimmedJetsUpdated)
+    process.p.associate(process.pfParticleNetFromMiniAODAK4PuppiTask)
+    process.p.associate(process.slimmedJetsUpdatedTask)
+
 if True:
     process.source.fileNames  = cms.untracked.vstring(*inputMC)
     goMT()
@@ -155,6 +276,7 @@ if True:
     addBtagging(("l1tSC4NGJetProducer","l1tSC4NGJets"))
     addNNPuppiTaus()
     addGenJetFlavourTable()
+    addOfflineBTagging()
     addJetNTuple(trktype = trktype, nparam = nparam)
     if False:
         open("debug_dump_runJetNTuple.py", "w").write(process.dumpPython())
