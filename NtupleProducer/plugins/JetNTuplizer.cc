@@ -1469,9 +1469,8 @@ JetNTuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             jet_puppicand_isHadronPlus.push_back(puppicand.hwId.bits == l1ct::ParticleID::HADPLUS);
             jet_puppicand_isHadronMinus.push_back(puppicand.hwId.bits == l1ct::ParticleID::HADMINUS);
 
-            jet_puppicand_z0.push_back(L1TSC4NGJetID::inputtype(puppicand.hwId.charged()) ? L1TSC4NGJetID::inputtype(puppicand.hwZ0() * l1ct::Scales::Z0_LSB) : L1TSC4NGJetID::inputtype(0.0));
-            jet_puppicand_dxy.push_back(L1TSC4NGJetID::inputtype(puppicand.hwId.charged()) ? L1TSC4NGJetID::inputtype(puppicand.hwDxy() * l1ct::Scales::DXY_LSB) : L1TSC4NGJetID::inputtype(0.0));
-
+            jet_puppicand_z0.push_back(L1TSC4NGJetID::inputtype(puppicand.hwId.charged()) ? L1TSC4NGJetID::inputtype(puppicand.hwZ0()) : L1TSC4NGJetID::inputtype(0.0));
+            jet_puppicand_dxy.push_back(L1TSC4NGJetID::inputtype(puppicand.hwId.charged()) ? L1TSC4NGJetID::inputtype(puppicand.hwDxy()) : L1TSC4NGJetID::inputtype(0.0));
             jet_puppicand_is_filled.push_back(L1TSC4NGJetID::inputtype(1.0));
             jet_puppicand_puppi_weight.push_back(L1TSC4NGJetID::inputtype(puppicand.hwId.neutral()) ? L1TSC4NGJetID::inputtype(puppicand.hwPuppiW()) : L1TSC4NGJetID::inputtype(0.0)); 
             jet_puppicand_emid.push_back(L1TSC4NGJetID::inputtype(puppicand.hwId.neutral()) ? L1TSC4NGJetID::inputtype(puppicand.hwEmID()) : L1TSC4NGJetID::inputtype(0.0));
