@@ -610,12 +610,12 @@ JetNTuplizer::JetNTuplizer(const edm::ParameterSet& iConfig) :
     tree_->Branch("jet_pfcand_isElectronMinus",&jet_puppicand_isElectronMinus, njet_pfcand_); 
     tree_->Branch("jet_pfcand_isMuonPlus",&jet_puppicand_isMuonPlus, njet_pfcand_); 
     tree_->Branch("jet_pfcand_isMuonMinus",&jet_puppicand_isMuonMinus, njet_pfcand_); 
-    tree_->Branch("jet_pfcand_isNeutralHadron",&jet_puppicand_isNeutralHadron, njet_pfcand_); 
-    tree_->Branch("jet_pfcand_isHadronPlus",&jet_puppicand_isHadronPlus, njet_pfcand_); 
-    tree_->Branch("jet_pfcand_isHadronMinus",&jet_puppicand_isHadronMinus, njet_pfcand_); 
+    tree_->Branch("jet_pfcand_isNeutralHadron",&jet_puppicand_isNeutralHadron, njet_pfcand_);
+    tree_->Branch("jet_pfcand_isChargedHadronPlus",&jet_puppicand_isHadronPlus, njet_pfcand_);
+    tree_->Branch("jet_pfcand_isChargedHadronMinus",&jet_puppicand_isHadronMinus, njet_pfcand_);
     tree_->Branch("jet_pfcand_z0",&jet_puppicand_z0, njet_pfcand_); 
     tree_->Branch("jet_pfcand_dxy",&jet_puppicand_dxy, njet_pfcand_); 
-    tree_->Branch("jet_pfcand_is_filled",&jet_puppicand_is_filled, njet_pfcand_); 
+    tree_->Branch("jet_pfcand_isfilled",&jet_puppicand_is_filled, njet_pfcand_);
     tree_->Branch("jet_pfcand_puppiweight",&jet_puppicand_puppi_weight, njet_pfcand_); 
     tree_->Branch("jet_pfcand_emid",&jet_puppicand_emid, njet_pfcand_); 
     tree_->Branch("jet_pfcand_quality",&jet_puppicand_quality, njet_pfcand_); 
