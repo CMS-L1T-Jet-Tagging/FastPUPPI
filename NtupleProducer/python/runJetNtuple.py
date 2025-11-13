@@ -266,7 +266,7 @@ def addOfflineBTagging():
     process.p.associate(process.pfParticleNetFromMiniAODAK4PuppiTask)
     process.p.associate(process.slimmedJetsUpdatedTask)
 
-if False:
+if True:
     process.source.fileNames  = cms.untracked.vstring(*inputMC)
     goMT()
     trktype = "extended"
