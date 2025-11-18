@@ -1315,7 +1315,7 @@ JetNTuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         GlobalVector jetRefTrackDir(jetv_l1[i]->px(),jetv_l1[i]->py(),jetv_l1[i]->pz());
 
         // from PNET ntupler
-        std::sort(vectorOfConstituents.begin(),vectorOfConstituents.end(),l1PFCandidateSorter);
+        std::stable_sort(vectorOfConstituents.begin(),vectorOfConstituents.end(),l1PFCandidateSorter);
 
         // TODO
         // TODO only store the corrct puppi candidates as pf below
