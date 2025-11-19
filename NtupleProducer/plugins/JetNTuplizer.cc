@@ -1427,8 +1427,8 @@ JetNTuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             // PUPPI stuff for training
             l1ct::PuppiObj puppicand = l1ct::PuppiObj::unpack(pfcand.encodedPuppi64());
 
-            constexpr int INV_LUT_SIZE = 256;
-            L1TSC4NGJetID::inputtype inv_jet_pt = l1ct::invert_with_shift<L1TSC4NGJetID::inputtype, L1TSC4NGJetID::inputtype, INV_LUT_SIZE>(jet_pt_); // divide by HW jet pt, which should be without JEC!
+            constexpr int INV_LUT_SIZE = 1024;
+            L1TSC4NGJetID::inputtype inv_jet_pt = l1ct::invert_with_shift<l1ct::pt_t, L1TSC4NGJetID::inputtype, INV_LUT_SIZE>(jet_pt_); // divide by HW jet pt, which should be without JEC!
 
             constexpr int LOG_LUT_SIZE = 256;
             L1TSC4NGJetID::inputtype log_jet_pt = l1ct::log_with_shift<l1ct::pt_t,L1TSC4NGJetID::inputtype, LOG_LUT_SIZE>(puppicand.hwPt);
