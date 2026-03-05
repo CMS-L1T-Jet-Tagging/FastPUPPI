@@ -177,6 +177,7 @@ class JetNTuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::
         edm::EDGetTokenT<edm::ValueMap<float>> const bjetids_;
         edm::EDGetTokenT<std::vector<pat::Jet>> const offlineJets_;
         edm::EDGetTokenT<std::vector<reco::Vertex>> const offlinePVs_;
+        bool doOfflineInfo_;
         // const edm::InputTag pileupInfoTag_;
         TTree *tree_;
         uint32_t run_, lumi_; uint64_t event_;
@@ -336,12 +337,18 @@ class JetNTuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::
     std::vector<float> jet_offline_pfcand_log_pt_;
     std::vector<float> jet_offline_pfcand_pt_rel_;
     std::vector<float> jet_offline_pfcand_eta_;
+    std::vector<float> jet_offline_pfcand_eta_phys_;
     std::vector<float> jet_offline_pfcand_deta_;
+    std::vector<float> jet_offline_pfcand_deta_phys_;
     std::vector<float> jet_offline_pfcand_phi_;
+    std::vector<float> jet_offline_pfcand_phi_phys_;
     std::vector<float> jet_offline_pfcand_dphi_;
+    std::vector<float> jet_offline_pfcand_dphi_phys_;
     std::vector<float> jet_offline_pfcand_mass_;
     std::vector<float> jet_offline_pfcand_dxy_;
+    std::vector<float> jet_offline_pfcand_dxy_phys_;
     std::vector<float> jet_offline_pfcand_z0_;
+    std::vector<float> jet_offline_pfcand_z0_phys_;
     std::vector<float> jet_offline_pfcand_quality_;
     std::vector<float> jet_offline_pfcand_puppi_weight_;
     std::vector<float> jet_offline_pfcand_is_filled_;
@@ -468,7 +475,8 @@ JetNTuplizer::JetNTuplizer(const edm::ParameterSet& iConfig) :
     fVtxEmu_(consumes<std::vector<l1t::VertexWord>>(iConfig.getParameter<edm::InputTag>("vtx"))),
     bjetids_(consumes<edm::ValueMap<float>>(iConfig.getParameter<edm::InputTag>("bjetIDs"))),
     offlineJets_(consumes<std::vector<pat::Jet>>(iConfig.getParameter<edm::InputTag>("offlineJets"))),
-    offlinePVs_(consumes<std::vector<reco::Vertex>>(iConfig.getParameter<edm::InputTag>("offlinePVs")))
+    offlinePVs_(consumes<std::vector<reco::Vertex>>(iConfig.getParameter<edm::InputTag>("offlinePVs"))),
+    doOfflineInfo_(iConfig.getParameter<bool>("doOfflineInfo"))
 {
     usesResource("TFileService");
     edm::Service<TFileService> fs;
@@ -540,58 +548,66 @@ JetNTuplizer::JetNTuplizer(const edm::ParameterSet& iConfig) :
     tree_->Branch("jet_jecmatch_dR", &jet_jecmatch_dR_);
     tree_->Branch("jet_pt_corr", &jet_pt_corr_);
 
+    if (doOfflineInfo_) {
     // offline
-    tree_->Branch("jet_offline_pt", &jet_offline_pt_);
-    tree_->Branch("jet_offline_hflav", &jet_offline_hflav_);
-    tree_->Branch("jet_offline_pflav", &jet_offline_pflav_);
-    tree_->Branch("jet_offline_genPt_", &jet_offline_genPt_);
-    tree_->Branch("jet_offline_eta", &jet_offline_eta_);
-    tree_->Branch("jet_offline_phi", &jet_offline_phi_);
-    tree_->Branch("jet_offline_mass", &jet_offline_mass_);
-    tree_->Branch("jet_offline_dR", &jet_offline_dR_);
-    tree_->Branch("jet_offline_btag_deepcsv_probb", &jet_offline_btag_deepcsv_probb_);
-    tree_->Branch("jet_offline_btag_deepcsv_probc", &jet_offline_btag_deepcsv_probc_);
-    tree_->Branch("jet_offline_btag_deepcsv_probudsg", &jet_offline_btag_deepcsv_probudsg_);
-    tree_->Branch("jet_offline_btag_deepjet_probb", &jet_offline_btag_deepjet_probb_);
-    tree_->Branch("jet_offline_btag_deepjet_probc", &jet_offline_btag_deepjet_probc_);
-    tree_->Branch("jet_offline_btag_deepjet_probuds", &jet_offline_btag_deepjet_probuds_);
-    tree_->Branch("jet_offline_btag_deepjet_probg", &jet_offline_btag_deepjet_probg_);
-    tree_->Branch("jet_offline_btag_pnet_probb", &jet_offline_btag_pnet_probb_);
-    tree_->Branch("jet_offline_btag_pnet_probc", &jet_offline_btag_pnet_probc_);
-    tree_->Branch("jet_offline_btag_pnet_probuds", &jet_offline_btag_pnet_probuds_);
-    tree_->Branch("jet_offline_btag_pnet_probg", &jet_offline_btag_pnet_probg_);
-    tree_->Branch("jet_offline_btag_pnet_probtaup", &jet_offline_btag_pnet_probtaup_);
-    tree_->Branch("jet_offline_btag_pnet_probtaum", &jet_offline_btag_pnet_probtaum_);
-    tree_->Branch("jet_offline_btag_pnet_probele", &jet_offline_btag_pnet_probele_);
-    tree_->Branch("jet_offline_btag_pnet_probmu", &jet_offline_btag_pnet_probmu_);
-    tree_->Branch("jet_offline_btag_pnetForward_probq", &jet_offline_btag_pnetForward_probq_);
-    tree_->Branch("jet_offline_btag_pnetForward_probg", &jet_offline_btag_pnetForward_probg_);
+        tree_->Branch("jet_offline_pt", &jet_offline_pt_);
+        tree_->Branch("jet_offline_hflav", &jet_offline_hflav_);
+        tree_->Branch("jet_offline_pflav", &jet_offline_pflav_);
+        tree_->Branch("jet_offline_genPt_", &jet_offline_genPt_);
+        tree_->Branch("jet_offline_eta", &jet_offline_eta_);
+        tree_->Branch("jet_offline_phi", &jet_offline_phi_);
+        tree_->Branch("jet_offline_mass", &jet_offline_mass_);
+        tree_->Branch("jet_offline_dR", &jet_offline_dR_);
+        tree_->Branch("jet_offline_btag_deepcsv_probb", &jet_offline_btag_deepcsv_probb_);
+        tree_->Branch("jet_offline_btag_deepcsv_probc", &jet_offline_btag_deepcsv_probc_);
+        tree_->Branch("jet_offline_btag_deepcsv_probudsg", &jet_offline_btag_deepcsv_probudsg_);
+        tree_->Branch("jet_offline_btag_deepjet_probb", &jet_offline_btag_deepjet_probb_);
+        tree_->Branch("jet_offline_btag_deepjet_probc", &jet_offline_btag_deepjet_probc_);
+        tree_->Branch("jet_offline_btag_deepjet_probuds", &jet_offline_btag_deepjet_probuds_);
+        tree_->Branch("jet_offline_btag_deepjet_probg", &jet_offline_btag_deepjet_probg_);
+        tree_->Branch("jet_offline_btag_pnet_probb", &jet_offline_btag_pnet_probb_);
+        tree_->Branch("jet_offline_btag_pnet_probc", &jet_offline_btag_pnet_probc_);
+        tree_->Branch("jet_offline_btag_pnet_probuds", &jet_offline_btag_pnet_probuds_);
+        tree_->Branch("jet_offline_btag_pnet_probg", &jet_offline_btag_pnet_probg_);
+        tree_->Branch("jet_offline_btag_pnet_probtaup", &jet_offline_btag_pnet_probtaup_);
+        tree_->Branch("jet_offline_btag_pnet_probtaum", &jet_offline_btag_pnet_probtaum_);
+        tree_->Branch("jet_offline_btag_pnet_probele", &jet_offline_btag_pnet_probele_);
+        tree_->Branch("jet_offline_btag_pnet_probmu", &jet_offline_btag_pnet_probmu_);
+        tree_->Branch("jet_offline_btag_pnetForward_probq", &jet_offline_btag_pnetForward_probq_);
+        tree_->Branch("jet_offline_btag_pnetForward_probg", &jet_offline_btag_pnetForward_probg_);
 
-    tree_->Branch("njet_puppicand_off", &njet_pfcand_off_);
-    tree_->Branch("jet_offline_puppicand_pt", &jet_offline_pfcand_pt_, njet_pfcand_off_);
-    tree_->Branch("jet_offline_puppicand_log_pt", &jet_offline_pfcand_log_pt_, njet_pfcand_off_);
-    tree_->Branch("jet_offline_puppicand_pt_rel", &jet_offline_pfcand_pt_rel_, njet_pfcand_off_);
-    tree_->Branch("jet_offline_puppicand_eta", &jet_offline_pfcand_eta_, njet_pfcand_off_);
-    tree_->Branch("jet_offline_puppicand_deta", &jet_offline_pfcand_deta_, njet_pfcand_off_);
-    tree_->Branch("jet_offline_puppicand_phi", &jet_offline_pfcand_phi_, njet_pfcand_off_);
-    tree_->Branch("jet_offline_puppicand_dphi", &jet_offline_pfcand_dphi_, njet_pfcand_off_);
-    tree_->Branch("jet_offline_puppicand_mass", &jet_offline_pfcand_mass_, njet_pfcand_off_);
-    tree_->Branch("jet_offline_puppicand_dxy", &jet_offline_pfcand_dxy_, njet_pfcand_off_);
-    tree_->Branch("jet_offline_puppicand_z0", &jet_offline_pfcand_z0_, njet_pfcand_off_);
-    tree_->Branch("jet_offline_puppicand_quality", &jet_offline_pfcand_quality_, njet_pfcand_off_);
-    tree_->Branch("jet_offline_puppicand_puppi_weight", &jet_offline_pfcand_puppi_weight_, njet_pfcand_off_);
-    tree_->Branch("jet_offline_puppicand_is_filled", &jet_offline_pfcand_is_filled_, njet_pfcand_off_);
-    tree_->Branch("jet_offline_puppicand_emid", &jet_offline_pfcand_emid_, njet_pfcand_off_);
-    tree_->Branch("jet_offline_puppicand_charge", &jet_offline_pfcand_charge_, njet_pfcand_off_);
-    tree_->Branch("jet_offline_puppicand_id", &jet_offline_pfcand_id_, njet_pfcand_off_);
-    tree_->Branch("jet_offline_puppicand_isPhoton", &jet_offline_pfcand_isPhoton_, njet_pfcand_off_);
-    tree_->Branch("jet_offline_puppicand_isElectronPlus", &jet_offline_pfcand_isElectronPlus_, njet_pfcand_off_);
-    tree_->Branch("jet_offline_puppicand_isElectronMinus", &jet_offline_pfcand_isElectronMinus_, njet_pfcand_off_);
-    tree_->Branch("jet_offline_puppicand_isMuonPlus", &jet_offline_pfcand_isMuonPlus_, njet_pfcand_off_);
-    tree_->Branch("jet_offline_puppicand_isMuonMinus", &jet_offline_pfcand_isMuonMinus_, njet_pfcand_off_);
-    tree_->Branch("jet_offline_puppicand_isHadronPlus", &jet_offline_pfcand_isHadronPlus_, njet_pfcand_off_);
-    tree_->Branch("jet_offline_puppicand_isHadronMinus", &jet_offline_pfcand_isHadronMinus_, njet_pfcand_off_);
-    tree_->Branch("jet_offline_puppicand_isNeutralHadron", &jet_offline_pfcand_isNeutralHadron_, njet_pfcand_off_);
+        tree_->Branch("njet_puppicand_off", &njet_pfcand_off_);
+        tree_->Branch("jet_offline_puppicand_pt", &jet_offline_pfcand_pt_, njet_pfcand_off_);
+        tree_->Branch("jet_offline_puppicand_pt_log", &jet_offline_pfcand_log_pt_, njet_pfcand_off_);
+        tree_->Branch("jet_offline_puppicand_pt_rel", &jet_offline_pfcand_pt_rel_, njet_pfcand_off_);
+        tree_->Branch("jet_offline_puppicand_eta", &jet_offline_pfcand_eta_, njet_pfcand_off_);
+        tree_->Branch("jet_offline_puppicand_eta_phys", &jet_offline_pfcand_eta_phys_, njet_pfcand_off_);
+        tree_->Branch("jet_offline_puppicand_deta", &jet_offline_pfcand_deta_, njet_pfcand_off_);
+        tree_->Branch("jet_offline_puppicand_deta_phys", &jet_offline_pfcand_deta_phys_, njet_pfcand_off_);
+        tree_->Branch("jet_offline_puppicand_phi", &jet_offline_pfcand_phi_, njet_pfcand_off_);
+        tree_->Branch("jet_offline_puppicand_phi_phys", &jet_offline_pfcand_phi_phys_, njet_pfcand_off_);
+        tree_->Branch("jet_offline_puppicand_dphi", &jet_offline_pfcand_dphi_, njet_pfcand_off_);
+        tree_->Branch("jet_offline_puppicand_dphi_phys", &jet_offline_pfcand_dphi_phys_, njet_pfcand_off_);
+        tree_->Branch("jet_offline_puppicand_mass", &jet_offline_pfcand_mass_, njet_pfcand_off_);
+        tree_->Branch("jet_offline_puppicand_dxy", &jet_offline_pfcand_dxy_, njet_pfcand_off_);
+        tree_->Branch("jet_offline_puppicand_dxy_phys", &jet_offline_pfcand_dxy_phys_, njet_pfcand_off_);
+        tree_->Branch("jet_offline_puppicand_z0", &jet_offline_pfcand_z0_, njet_pfcand_off_);
+        tree_->Branch("jet_offline_puppicand_z0_phys", &jet_offline_pfcand_z0_phys_, njet_pfcand_off_);
+        tree_->Branch("jet_offline_puppicand_quality", &jet_offline_pfcand_quality_, njet_pfcand_off_);
+        tree_->Branch("jet_offline_puppicand_puppiweight", &jet_offline_pfcand_puppi_weight_, njet_pfcand_off_);
+        tree_->Branch("jet_offline_puppicand_isfilled", &jet_offline_pfcand_is_filled_, njet_pfcand_off_);
+        tree_->Branch("jet_offline_puppicand_emid", &jet_offline_pfcand_emid_, njet_pfcand_off_);
+        tree_->Branch("jet_offline_puppicand_charge", &jet_offline_pfcand_charge_, njet_pfcand_off_);
+        tree_->Branch("jet_offline_puppicand_id", &jet_offline_pfcand_id_, njet_pfcand_off_);
+        tree_->Branch("jet_offline_puppicand_isPhoton", &jet_offline_pfcand_isPhoton_, njet_pfcand_off_);
+        tree_->Branch("jet_offline_puppicand_isElectronPlus", &jet_offline_pfcand_isElectronPlus_, njet_pfcand_off_);
+        tree_->Branch("jet_offline_puppicand_isElectronMinus", &jet_offline_pfcand_isElectronMinus_, njet_pfcand_off_);
+        tree_->Branch("jet_offline_puppicand_isMuonPlus", &jet_offline_pfcand_isMuonPlus_, njet_pfcand_off_);
+        tree_->Branch("jet_offline_puppicand_isMuonMinus", &jet_offline_pfcand_isMuonMinus_, njet_pfcand_off_);
+        tree_->Branch("jet_offline_puppicand_isHadronPlus", &jet_offline_pfcand_isHadronPlus_, njet_pfcand_off_);
+        tree_->Branch("jet_offline_puppicand_isHadronMinus", &jet_offline_pfcand_isHadronMinus_, njet_pfcand_off_);
+        tree_->Branch("jet_offline_puppicand_isNeutralHadron", &jet_offline_pfcand_isNeutralHadron_, njet_pfcand_off_);
+    }
 
 
     tree_->Branch("jet_npuppicand", &njet_pfcand_);
@@ -773,8 +789,10 @@ JetNTuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     iEvent.getByToken(nntaus_, nntaus);
     iEvent.getByToken(electrons_, electrons);
     iEvent.getByToken(muons_, muons);
-    iEvent.getByToken(offlineJets_, offlineJets);
-    iEvent.getByToken(offlinePVs_, offlinePVs);
+    if (doOfflineInfo_) {
+        iEvent.getByToken(offlineJets_, offlineJets);
+        iEvent.getByToken(offlinePVs_, offlinePVs);
+    }
 
     float vz = 0.;
     double ptsum = 0;
@@ -861,13 +879,16 @@ JetNTuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     }
     sort(muonv_l1.begin(), muonv_l1.end(), muonRefSorter);
 
+
     // offline jets
     std::vector<pat::JetRef> jetv_offline;
-    for (auto jets_iter = offlineJets->begin(); jets_iter != offlineJets->end(); ++jets_iter) {                                                                                                   
-        pat::JetRef jref(offlineJets, jets_iter - offlineJets->begin());                                                                                                                      
-        jetv_offline.push_back(jref);                                                                                                                                                              
+    if (doOfflineInfo_) {
+        for (auto jets_iter = offlineJets->begin(); jets_iter != offlineJets->end(); ++jets_iter) {                                                                                                   
+            pat::JetRef jref(offlineJets, jets_iter - offlineJets->begin());                                                                                                                      
+            jetv_offline.push_back(jref);                                                                                                                                                              
+        }
+        sort(jetv_offline.begin(), jetv_offline.end(), offlineJetRefSorter);
     }
-    sort(jetv_offline.begin(), jetv_offline.end(), offlineJetRefSorter);
 
     // loop over reco jets
 
@@ -1123,86 +1144,200 @@ JetNTuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             jet_pt_corr_ = -1.;
         }
 
-        // match to offline jets
-        int   pos_matched_offline = -1;
-        float minDR_offline = 0.4;
-        njet_pfcand_off_ = 0;
-        for(size_t ioff = 0; ioff < jetv_offline.size(); ioff++){
-            if(reco::deltaR(jetv_offline[ioff]->p4(),jetv_l1[i]->p4()) < minDR_offline){
-                pos_matched_offline = ioff;
-                minDR_offline = reco::deltaR(jetv_offline[ioff]->p4(),jetv_l1[i]->p4());
+        if (doOfflineInfo_) {
+            // match to offline jets
+            int   pos_matched_offline = -1;
+            float minDR_offline = 0.4;
+            njet_pfcand_off_ = 0;
+            for(size_t ioff = 0; ioff < jetv_offline.size(); ioff++){
+                if(reco::deltaR(jetv_offline[ioff]->p4(),jetv_l1[i]->p4()) < minDR_offline){
+                    pos_matched_offline = ioff;
+                    minDR_offline = reco::deltaR(jetv_offline[ioff]->p4(),jetv_l1[i]->p4());
+                }
             }
-        }
 
-        jet_offline_pfcand_pt_.clear();
-        jet_offline_pfcand_log_pt_.clear();
-        jet_offline_pfcand_pt_rel_.clear();
-        jet_offline_pfcand_eta_.clear();
-        jet_offline_pfcand_deta_.clear();
-        jet_offline_pfcand_phi_.clear();
-        jet_offline_pfcand_dphi_.clear();
-        jet_offline_pfcand_mass_.clear();
-        jet_offline_pfcand_dxy_.clear();
-        jet_offline_pfcand_z0_.clear();
-        jet_offline_pfcand_quality_.clear();
-        jet_offline_pfcand_puppi_weight_.clear();
-        jet_offline_pfcand_is_filled_.clear();
-        jet_offline_pfcand_emid_.clear();
-        jet_offline_pfcand_charge_.clear();
-        jet_offline_pfcand_id_.clear();
-        jet_offline_pfcand_isPhoton_.clear();
-        jet_offline_pfcand_isElectronPlus_.clear();
-        jet_offline_pfcand_isElectronMinus_.clear();
-        jet_offline_pfcand_isMuonPlus_.clear();
-        jet_offline_pfcand_isMuonMinus_.clear();
-        jet_offline_pfcand_isHadronPlus_.clear();
-        jet_offline_pfcand_isHadronMinus_.clear();
-        jet_offline_pfcand_isNeutralHadron_.clear();
+            jet_offline_pfcand_pt_.clear();
+            jet_offline_pfcand_log_pt_.clear();
+            jet_offline_pfcand_pt_rel_.clear();
+            jet_offline_pfcand_eta_.clear();
+            jet_offline_pfcand_eta_phys_.clear();
+            jet_offline_pfcand_deta_.clear();
+            jet_offline_pfcand_deta_phys_.clear();
+            jet_offline_pfcand_phi_.clear();
+            jet_offline_pfcand_phi_phys_.clear();
+            jet_offline_pfcand_dphi_.clear();
+            jet_offline_pfcand_dphi_phys_.clear();
+            jet_offline_pfcand_mass_.clear();
+            jet_offline_pfcand_dxy_.clear();
+            jet_offline_pfcand_dxy_phys_.clear();
+            jet_offline_pfcand_z0_.clear();
+            jet_offline_pfcand_z0_phys_.clear();
+            jet_offline_pfcand_quality_.clear();
+            jet_offline_pfcand_puppi_weight_.clear();
+            jet_offline_pfcand_is_filled_.clear();
+            jet_offline_pfcand_emid_.clear();
+            jet_offline_pfcand_charge_.clear();
+            jet_offline_pfcand_id_.clear();
+            jet_offline_pfcand_isPhoton_.clear();
+            jet_offline_pfcand_isElectronPlus_.clear();
+            jet_offline_pfcand_isElectronMinus_.clear();
+            jet_offline_pfcand_isMuonPlus_.clear();
+            jet_offline_pfcand_isMuonMinus_.clear();
+            jet_offline_pfcand_isHadronPlus_.clear();
+            jet_offline_pfcand_isHadronMinus_.clear();
+            jet_offline_pfcand_isNeutralHadron_.clear();
 
-        if (pos_matched_offline > -1){
-            jet_offline_dR_    = minDR_offline;   
-            jet_offline_pt_    = jetv_offline[pos_matched_offline]->pt();
-            jet_offline_hflav_ = abs(jetv_offline[pos_matched_offline]->hadronFlavour());
-            jet_offline_pflav_ = jetv_offline[pos_matched_offline]->partonFlavour();
-            if (jetv_offline[pos_matched_offline]->genJet()) {
-                jet_offline_genPt_ = jetv_offline[pos_matched_offline]->genJet()->pt();
-            }
-            else {
-                jet_offline_genPt_ = -1.;
-            }
-            jet_offline_eta_   = jetv_offline[pos_matched_offline]->eta();
-            jet_offline_phi_   = jetv_offline[pos_matched_offline]->phi();
-            jet_offline_mass_  = jetv_offline[pos_matched_offline]->mass();
+            if (pos_matched_offline > -1){
+                jet_offline_dR_    = minDR_offline;   
+                jet_offline_pt_    = jetv_offline[pos_matched_offline]->pt();
+                jet_offline_hflav_ = abs(jetv_offline[pos_matched_offline]->hadronFlavour());
+                jet_offline_pflav_ = jetv_offline[pos_matched_offline]->partonFlavour();
+                if (jetv_offline[pos_matched_offline]->genJet()) {
+                    jet_offline_genPt_ = jetv_offline[pos_matched_offline]->genJet()->pt();
+                }
+                else {
+                    jet_offline_genPt_ = -1.;
+                }
+                jet_offline_eta_   = jetv_offline[pos_matched_offline]->eta();
+                jet_offline_phi_   = jetv_offline[pos_matched_offline]->phi();
+                jet_offline_mass_  = jetv_offline[pos_matched_offline]->mass();
 
-            if (fabs(jetv_offline[pos_matched_offline]->eta()) < 2.4){
-                jet_offline_btag_deepcsv_probb_ = jetv_offline[pos_matched_offline]->bDiscriminator("pfDeepCSVJetTags:probb") + jetv_offline[pos_matched_offline]->bDiscriminator("pfDeepCSVJetTags:probbb");
-                jet_offline_btag_deepcsv_probc_ = jetv_offline[pos_matched_offline]->bDiscriminator("pfDeepCSVJetTags:probc");
-                jet_offline_btag_deepcsv_probudsg_ = jetv_offline[pos_matched_offline]->bDiscriminator("pfDeepCSVJetTags:probudsg");
+                if (fabs(jetv_offline[pos_matched_offline]->eta()) < 2.4){
+                    jet_offline_btag_deepcsv_probb_ = jetv_offline[pos_matched_offline]->bDiscriminator("pfDeepCSVJetTags:probb") + jetv_offline[pos_matched_offline]->bDiscriminator("pfDeepCSVJetTags:probbb");
+                    jet_offline_btag_deepcsv_probc_ = jetv_offline[pos_matched_offline]->bDiscriminator("pfDeepCSVJetTags:probc");
+                    jet_offline_btag_deepcsv_probudsg_ = jetv_offline[pos_matched_offline]->bDiscriminator("pfDeepCSVJetTags:probudsg");
 
-                jet_offline_btag_deepjet_probb_ = jetv_offline[pos_matched_offline]->bDiscriminator("pfDeepFlavourJetTags:probb") + jetv_offline[pos_matched_offline]->bDiscriminator("pfDeepFlavourJetTags:probbb") + jetv_offline[pos_matched_offline]->bDiscriminator("pfDeepFlavourJetTags:problepb");
-                jet_offline_btag_deepjet_probc_ = jetv_offline[pos_matched_offline]->bDiscriminator("pfDeepFlavourJetTags:probc");
-                jet_offline_btag_deepjet_probuds_ = jetv_offline[pos_matched_offline]->bDiscriminator("pfDeepFlavourJetTags:probuds");
-                jet_offline_btag_deepjet_probg_ = jetv_offline[pos_matched_offline]->bDiscriminator("pfDeepFlavourJetTags:probg");
+                    jet_offline_btag_deepjet_probb_ = jetv_offline[pos_matched_offline]->bDiscriminator("pfDeepFlavourJetTags:probb") + jetv_offline[pos_matched_offline]->bDiscriminator("pfDeepFlavourJetTags:probbb") + jetv_offline[pos_matched_offline]->bDiscriminator("pfDeepFlavourJetTags:problepb");
+                    jet_offline_btag_deepjet_probc_ = jetv_offline[pos_matched_offline]->bDiscriminator("pfDeepFlavourJetTags:probc");
+                    jet_offline_btag_deepjet_probuds_ = jetv_offline[pos_matched_offline]->bDiscriminator("pfDeepFlavourJetTags:probuds");
+                    jet_offline_btag_deepjet_probg_ = jetv_offline[pos_matched_offline]->bDiscriminator("pfDeepFlavourJetTags:probg");
 
-                jet_offline_btag_pnet_probb_ = (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probb"));
-                jet_offline_btag_pnet_probc_ = (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probc"));
-                jet_offline_btag_pnet_probuds_ = (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probuds"));
-                jet_offline_btag_pnet_probg_ = (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probg"));
-                jet_offline_btag_pnet_probmu_ = (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probmu"));
-                jet_offline_btag_pnet_probele_ = (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probele"));
-                jet_offline_btag_pnet_probtaup_ = (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probtaup1h0p")) + (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probtaup1h1p")) + (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probtaup1h2p")) + (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probtaup3h0p")) + (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probtaup3h1p"));
-                jet_offline_btag_pnet_probtaum_ = (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probtaum1h0p")) + (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probtaum1h1p")) + (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probtaum1h2p") + (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probtaum3h0p")) + (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probtaum3h1p")));
+                    jet_offline_btag_pnet_probb_ = (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probb"));
+                    jet_offline_btag_pnet_probc_ = (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probc"));
+                    jet_offline_btag_pnet_probuds_ = (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probuds"));
+                    jet_offline_btag_pnet_probg_ = (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probg"));
+                    jet_offline_btag_pnet_probmu_ = (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probmu"));
+                    jet_offline_btag_pnet_probele_ = (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probele"));
+                    jet_offline_btag_pnet_probtaup_ = (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probtaup1h0p")) + (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probtaup1h1p")) + (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probtaup1h2p")) + (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probtaup3h0p")) + (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probtaup3h1p"));
+                    jet_offline_btag_pnet_probtaum_ = (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probtaum1h0p")) + (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probtaum1h1p")) + (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probtaum1h2p") + (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probtaum3h0p")) + (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiCentralJetTags:probtaum3h1p")));
+                }
+                else{
+                    jet_offline_btag_deepcsv_probb_ = -1.;
+                    jet_offline_btag_deepcsv_probc_ = -1.;
+                    jet_offline_btag_deepcsv_probudsg_ = -1.;
+
+                    jet_offline_btag_deepjet_probb_ = -1.;
+                    jet_offline_btag_deepjet_probc_ = -1.;
+                    jet_offline_btag_deepjet_probuds_ = -1.;
+                    jet_offline_btag_deepjet_probg_ = -1.;
+                    
+                    jet_offline_btag_pnet_probb_ = -1.;
+                    jet_offline_btag_pnet_probc_ = -1.;
+                    jet_offline_btag_pnet_probuds_ = -1.;
+                    jet_offline_btag_pnet_probg_ = -1.;
+                    jet_offline_btag_pnet_probmu_ = -1.;
+                    jet_offline_btag_pnet_probele_ = -1.;
+                    jet_offline_btag_pnet_probtaup_ = -1.;
+                    jet_offline_btag_pnet_probtaum_ = -1.;
+                }
+
+                if (fabs(jetv_offline[pos_matched_offline]->eta()) > 2.4){
+                    jet_offline_btag_pnetForward_probq_ = (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiForwardJetTags:probq"));
+                    jet_offline_btag_pnetForward_probg_ = (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiForwardJetTags:probg"));
+                }else{
+                    jet_offline_btag_pnetForward_probq_ = -1.;
+                    jet_offline_btag_pnetForward_probg_ = -1.;
+                }
+
+                TVector3 jet_direction_off (jetv_offline[pos_matched_offline]->momentum().Unit().x(),jetv_offline[pos_matched_offline]->momentum().Unit().y(),jetv_offline[pos_matched_offline]->momentum().Unit().z());
+
+                // now loop over the constituents and store their basic information (pt, eta, phi, id, charge)
+                for (unsigned int j = 0; j < jetv_offline[pos_matched_offline]->numberOfDaughters(); j++) {
+                    const reco::Candidate* daughter = jetv_offline[pos_matched_offline]->daughter(j);
+                    const pat::PackedCandidate* packed = dynamic_cast<const pat::PackedCandidate*>(daughter);
+                    if (packed) {
+                        njet_pfcand_off_++;
+                        // std::cout <<njet_pfcand_off_ << " PF cand: pt = " << packed->pt() << " eta = " << packed->eta() << " phi = " << packed->phi() << " mass = " << packed->mass() << " id = " << packed->pdgId() << " charge = " << packed->charge() << std::endl;
+                        // now get the same features we also have for the L1T candidates, which are:
+                        // pt, log(pt), pTrel, deltaEta, deltaPhi, eta, phi, mass, z0, dxy, track quality, puppi weight, isFilled, electromagnetic ID, One-hot encoding of particle ID
+                        
+
+                        jet_offline_pfcand_pt_.push_back(packed->pt());
+                        jet_offline_pfcand_log_pt_.push_back(std::log(packed->pt()));
+                        jet_offline_pfcand_pt_rel_.push_back(packed->pt()/jet_offline_pt_);
+                        jet_offline_pfcand_eta_.push_back(packed->eta()/(TMath::Pi()/720.));  // l1ct::Scales::ETA_LSB);
+                        jet_offline_pfcand_eta_phys_.push_back(packed->eta());
+                        jet_offline_pfcand_deta_.push_back((jet_offline_eta_ - packed->eta())/(TMath::Pi()/720.));
+                        jet_offline_pfcand_deta_phys_.push_back(jet_offline_eta_ - packed->eta());
+                        TVector3 pfcand_momentum_off (packed->momentum().x(),packed->momentum().y(),packed->momentum().z());
+                        jet_offline_pfcand_dphi_.push_back(jet_direction_off.DeltaPhi(pfcand_momentum_off)/(TMath::Pi()/720.));
+                        jet_offline_pfcand_dphi_phys_.push_back(jet_direction_off.DeltaPhi(pfcand_momentum_off));
+                        jet_offline_pfcand_phi_.push_back(packed->phi()/(TMath::Pi()/720.));
+                        jet_offline_pfcand_phi_phys_.push_back(packed->phi());
+                        jet_offline_pfcand_mass_.push_back(packed->mass());
+                        jet_offline_pfcand_dxy_phys_.push_back(sqrt(abs(packed->dxy())));
+                        jet_offline_pfcand_dxy_.push_back(int(sqrt(abs(packed->dxy()))/l1ct::Scales::DXYSQRT_LSB));
+                        jet_offline_pfcand_z0_.push_back(packed->dz());
+                        jet_offline_pfcand_z0_phys_.push_back(int(packed->dz()/l1ct::Scales::Z0_LSB));
+                        jet_offline_pfcand_quality_.push_back(packed->hasTrackDetails() ? packed->pseudoTrack().qualityMask() : (1 << reco::TrackBase::loose));
+                        jet_offline_pfcand_puppi_weight_.push_back(packed->puppiWeight());
+                        jet_offline_pfcand_is_filled_.push_back(1.0);
+                        // jet_offline_pfcand_emid_.push_back(L1TSC4NGJetID::inputtype(puppicand.hwId.charged()) ? L1TSC4NGJetID::inputtype(puppicand.hwTkQuality()) : L1TSC4NGJetID::inputtype(0.0));
+                        jet_offline_pfcand_emid_.push_back(0.);
+                        jet_offline_pfcand_charge_.push_back(packed->charge());
+                        jet_offline_pfcand_id_.push_back(packed->pdgId());
+                        jet_offline_pfcand_isPhoton_.push_back((fabs(packed->pdgId()) == 22));
+                        jet_offline_pfcand_isElectronPlus_.push_back((packed->pdgId() == 11));
+                        jet_offline_pfcand_isElectronMinus_.push_back((packed->pdgId() == -11));
+                        jet_offline_pfcand_isMuonPlus_.push_back((packed->pdgId() == 13));
+                        jet_offline_pfcand_isMuonMinus_.push_back((packed->pdgId() == -13));
+                        if ((abs(packed->pdgId()) != 22) && (abs(packed->pdgId()) != 11) && (abs(packed->pdgId()) != 13)){
+                            if (packed->charge() != 0){
+                                // not neutral
+                                if ((fabs(packed->pdgId()) < 11) || (fabs(packed->pdgId()) > 13)){
+                                    // not leptons -> hadrons
+                                    jet_offline_pfcand_isNeutralHadron_.push_back(0);
+                                    jet_offline_pfcand_isHadronPlus_.push_back((packed->charge() > 0));
+                                    jet_offline_pfcand_isHadronMinus_.push_back( (packed->charge() < 0));
+                                }else{
+                                    std::cout << "WARNING: charged lepton found in jet constituents! This should not happen!" << std::endl;
+                                    std::cout << "PDG ID: " << packed->pdgId() << ", charge: " << packed->charge() << std::endl;
+                                }
+                                
+                            }else{
+                                // neutral, so only exclude photons
+                                jet_offline_pfcand_isNeutralHadron_.push_back((fabs(packed->pdgId()) != 22));
+                                jet_offline_pfcand_isHadronPlus_.push_back(0);
+                                jet_offline_pfcand_isHadronMinus_.push_back(0);
+                            }
+                        }else{
+                                jet_offline_pfcand_isNeutralHadron_.push_back(0);
+                                jet_offline_pfcand_isHadronPlus_.push_back(0);
+                                jet_offline_pfcand_isHadronMinus_.push_back(0);
+                        }
+
+
+                    }
+                }
+
             }
             else{
+                jet_offline_dR_ = 999.;   
+                jet_offline_pt_ = -999.;
+                jet_offline_hflav_ = 999;
+                jet_offline_pflav_ = 999;
+                jet_offline_genPt_ = -1;
+                jet_offline_eta_ = -999.;
+                jet_offline_phi_ = -999.;
+                jet_offline_mass_ = -999.;
+
                 jet_offline_btag_deepcsv_probb_ = -1.;
                 jet_offline_btag_deepcsv_probc_ = -1.;
                 jet_offline_btag_deepcsv_probudsg_ = -1.;
-
                 jet_offline_btag_deepjet_probb_ = -1.;
                 jet_offline_btag_deepjet_probc_ = -1.;
                 jet_offline_btag_deepjet_probuds_ = -1.;
                 jet_offline_btag_deepjet_probg_ = -1.;
-                
                 jet_offline_btag_pnet_probb_ = -1.;
                 jet_offline_btag_pnet_probc_ = -1.;
                 jet_offline_btag_pnet_probuds_ = -1.;
@@ -1211,96 +1346,11 @@ JetNTuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 jet_offline_btag_pnet_probele_ = -1.;
                 jet_offline_btag_pnet_probtaup_ = -1.;
                 jet_offline_btag_pnet_probtaum_ = -1.;
-            }
-
-            if (fabs(jetv_offline[pos_matched_offline]->eta()) > 2.4){
-                jet_offline_btag_pnetForward_probq_ = (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiForwardJetTags:probq"));
-                jet_offline_btag_pnetForward_probg_ = (jetv_offline[pos_matched_offline]->bDiscriminator("pfParticleNetFromMiniAODAK4PuppiForwardJetTags:probg"));
-            }else{
                 jet_offline_btag_pnetForward_probq_ = -1.;
                 jet_offline_btag_pnetForward_probg_ = -1.;
+
             }
-
-            TVector3 jet_direction_off (jetv_offline[pos_matched_offline]->momentum().Unit().x(),jetv_offline[pos_matched_offline]->momentum().Unit().y(),jetv_offline[pos_matched_offline]->momentum().Unit().z());
-
-            // now loop over the constituents and store their basic information (pt, eta, phi, id, charge)
-            for (unsigned int j = 0; j < jetv_offline[pos_matched_offline]->numberOfDaughters(); j++) {
-                const reco::Candidate* daughter = jetv_offline[pos_matched_offline]->daughter(j);
-                const pat::PackedCandidate* packed = dynamic_cast<const pat::PackedCandidate*>(daughter);
-                if (packed) {
-                    njet_pfcand_off_++;
-                    // std::cout <<njet_pfcand_off_ << " PF cand: pt = " << packed->pt() << " eta = " << packed->eta() << " phi = " << packed->phi() << " mass = " << packed->mass() << " id = " << packed->pdgId() << " charge = " << packed->charge() << std::endl;
-                    // now get the same features we also have for the L1T candidates, which are:
-                    // pt, log(pt), pTrel, deltaEta, deltaPhi, eta, phi, mass, z0, dxy, track quality, puppi weight, isFilled, electromagnetic ID, One-hot encoding of particle ID
-                    jet_offline_pfcand_pt_.push_back(packed->pt());
-                    jet_offline_pfcand_log_pt_.push_back(std::log(packed->pt()));
-                    jet_offline_pfcand_pt_rel_.push_back(packed->pt()/jet_offline_pt_);
-                    jet_offline_pfcand_eta_.push_back(packed->eta());
-                    jet_offline_pfcand_deta_.push_back(jet_offline_eta_ - packed->eta());
-                    TVector3 pfcand_momentum_off (packed->momentum().x(),packed->momentum().y(),packed->momentum().z());
-                    jet_offline_pfcand_phi_.push_back(jet_direction_off.DeltaPhi(pfcand_momentum_off));
-                    jet_offline_pfcand_dphi_.push_back(packed->phi());
-                    jet_offline_pfcand_mass_.push_back(packed->mass());
-                    jet_offline_pfcand_dxy_.push_back(sqrt(abs(packed->dxy())));
-                    jet_offline_pfcand_z0_.push_back(packed->dz());
-                    jet_offline_pfcand_quality_.push_back(packed->hasTrackDetails() ? packed->pseudoTrack().qualityMask() : (1 << reco::TrackBase::loose));
-                    jet_offline_pfcand_puppi_weight_.push_back(packed->puppiWeight());
-                    jet_offline_pfcand_is_filled_.push_back(1.0);
-                    // jet_offline_pfcand_emid_.push_back(L1TSC4NGJetID::inputtype(puppicand.hwId.charged()) ? L1TSC4NGJetID::inputtype(puppicand.hwTkQuality()) : L1TSC4NGJetID::inputtype(0.0));
-                    jet_offline_pfcand_emid_.push_back(0.);
-                    jet_offline_pfcand_charge_.push_back(packed->charge());
-                    jet_offline_pfcand_id_.push_back(packed->pdgId());
-                    jet_offline_pfcand_isPhoton_.push_back((fabs(packed->pdgId()) == 22));
-                    jet_offline_pfcand_isElectronPlus_.push_back((packed->pdgId() == 11));
-                    jet_offline_pfcand_isElectronMinus_.push_back((packed->pdgId() == -11));
-                    jet_offline_pfcand_isMuonPlus_.push_back((packed->pdgId() == 13));
-                    jet_offline_pfcand_isMuonMinus_.push_back((packed->pdgId() == -13));
-                    if (packed->charge() != 0){
-                        // not neutral
-                        if ((fabs(packed->pdgId()) < 11) || (fabs(packed->pdgId()) > 13)){
-                            // not leptons -> hadrons
-                        jet_offline_pfcand_isHadronPlus_.push_back((packed->charge() > 0));
-                        jet_offline_pfcand_isHadronMinus_.push_back( (packed->charge() < 0));
-                        }
-                    }{
-                        // neutral, so only exclude photons
-                        jet_offline_pfcand_isNeutralHadron_.push_back((fabs(packed->pdgId()) != 22));
-                    }
-
-
-                }
-            }
-
-        }
-        else{
-            jet_offline_dR_ = 999.;   
-            jet_offline_pt_ = -999.;
-            jet_offline_hflav_ = 999;
-            jet_offline_pflav_ = 999;
-            jet_offline_genPt_ = -1;
-            jet_offline_eta_ = -999.;
-            jet_offline_phi_ = -999.;
-            jet_offline_mass_ = -999.;
-
-            jet_offline_btag_deepcsv_probb_ = -1.;
-            jet_offline_btag_deepcsv_probc_ = -1.;
-            jet_offline_btag_deepcsv_probudsg_ = -1.;
-            jet_offline_btag_deepjet_probb_ = -1.;
-            jet_offline_btag_deepjet_probc_ = -1.;
-            jet_offline_btag_deepjet_probuds_ = -1.;
-            jet_offline_btag_deepjet_probg_ = -1.;
-            jet_offline_btag_pnet_probb_ = -1.;
-            jet_offline_btag_pnet_probc_ = -1.;
-            jet_offline_btag_pnet_probuds_ = -1.;
-            jet_offline_btag_pnet_probg_ = -1.;
-            jet_offline_btag_pnet_probmu_ = -1.;
-            jet_offline_btag_pnet_probele_ = -1.;
-            jet_offline_btag_pnet_probtaup_ = -1.;
-            jet_offline_btag_pnet_probtaum_ = -1.;
-            jet_offline_btag_pnetForward_probq_ = -1.;
-            jet_offline_btag_pnetForward_probg_ = -1.;
-
-        }
+        } // if doOfflineInfo_
 
         // pf candidates
         std::vector<l1t::PFCandidate> vectorOfConstituents;

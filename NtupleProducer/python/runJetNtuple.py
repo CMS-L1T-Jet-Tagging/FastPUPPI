@@ -11,7 +11,8 @@ process.load("FWCore.MessageLogger.MessageLogger_cfi")
 process.options   = cms.untracked.PSet( wantSummary = cms.untracked.bool(False), allowUnscheduled = cms.untracked.bool(False) )
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1))
 process.MessageLogger.cerr.FwkReport.reportEvery = 1
-inputMC = ['file:/eos/cms/store/cmst3/group/l1tr/FastPUPPI/15_1_X/fpinputs_140X/v0/GluGluHHTo2B2Tau_PU200/inputs140X_1-1.root']
+# inputMC = ['file:/eos/cms/store/group/phys_exotica/L1P2AD/CRAB_PrivateMC/SVJ_mMed_500_SLIMMED_TPs/251117_081934/0000/inputs140X_1.root']
+inputMC = ['file:/eos/cms/store/cmst3/group/l1tr/FastPUPPI/15_1_X/fpinputs_151X/v1/GluGluHHTo2B2Tau_PU200/inputs151X_1-1.root']
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(*inputMC),
     inputCommands = cms.untracked.vstring("keep *", 
@@ -72,7 +73,7 @@ process.extraPFStuff = cms.Task(
         process.L1TLayer2EGTask,
         process.l1tMETPFProducer)
 
-def addJetNTuple(trktype = "extended", nparam = 5, tagged = True):
+def addJetNTuple(trktype = "extended", nparam = 5, tagged = True, offline = True):
     # create new jet tupler
     jetColl = "l1tSC4PFL1PuppiExtendedEmulator"
     jetCollCorr = "l1tSC4PFL1PuppiExtendedEmulator"
@@ -106,6 +107,7 @@ def addJetNTuple(trktype = "extended", nparam = 5, tagged = True):
         muons = cms.InputTag("l1tSAMuonsGmt","promptSAMuons"),
         offlineJets = cms.InputTag("slimmedJetsPuppi"),
         offlinePVs = cms.InputTag("offlineSlimmedPrimaryVertices"),
+        doOfflineInfo = cms.bool(offline),
     )
 
     if hasattr(process, "slimmedJetsUpdated"):
@@ -271,12 +273,14 @@ if True:
     goMT()
     trktype = "extended"
     nparam = 5
+    offline = True
     addSeededConeJets()
     addMultitagging(trktype = trktype)
     addBtagging(("l1tSC4NGJetProducer","l1tSC4NGJets"))
     addNNPuppiTaus()
     addGenJetFlavourTable()
-    addOfflineBTagging()
-    addJetNTuple(trktype = trktype, nparam = nparam)
+    if offline:
+        addOfflineBTagging()
+    addJetNTuple(trktype = trktype, nparam = nparam, offline = offline)
     if False:
         open("debug_dump_runJetNTuple.py", "w").write(process.dumpPython())
