@@ -701,8 +701,8 @@ JetNTuplizer::JetNTuplizer(const edm::ParameterSet& iConfig) :
 
     // -------------------------------------
     // settings for output TFile and TTree
-    fs->file().SetCompressionAlgorithm(ROOT::ECompressionAlgorithm::kLZ4);
-    fs->file().SetCompressionLevel(4);
+    //fs->file().SetCompressionAlgorithm(ROOT::ECompressionAlgorithm::kLZ4);
+    //fs->file().SetCompressionLevel(4);
     for (int idx = 0; idx < tree_->GetListOfBranches()->GetEntries(); ++idx) {
         TBranch* br = dynamic_cast<TBranch*>(tree_->GetListOfBranches()->At(idx));
         if (br) {
