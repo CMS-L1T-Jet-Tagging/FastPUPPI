@@ -15,7 +15,7 @@ if [[ "$1" == "--151X_v1" ]]; then
     shift;
     MAIN=/eos/cms/store/cmst3/group/l1tr/FastPUPPI/15_1_X/fpinputs_151X/v1/$1
     PREFIX="inputs151X_"
-if [[ "$1" == "--131X_v9a" ]]; then
+elif [[ "$1" == "--131X_v9a" ]]; then
     shift;
     MAIN=/eos/cms/store/cmst3/group/l1tr/FastPUPPI/14_0_X/fpinputs_131X/v9a/$1
     PREFIX="inputs131X_"
