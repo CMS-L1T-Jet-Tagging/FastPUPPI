@@ -11,6 +11,10 @@ if [[ "$1" == "-j" ]]; then N=$2; shift; shift; fi;
 
 OPTS=""
 
+if [[ "$1" == "--151X_v1" ]]; then
+    shift;
+    MAIN=/eos/cms/store/cmst3/group/l1tr/FastPUPPI/15_1_X/fpinputs_151X/v1/$1
+    PREFIX="inputs151X_"
 if [[ "$1" == "--131X_v9a" ]]; then
     shift;
     MAIN=/eos/cms/store/cmst3/group/l1tr/FastPUPPI/14_0_X/fpinputs_131X/v9a/$1
@@ -67,9 +71,12 @@ if [[ "$1" == "--noclean" ]]; then
     clean=false;
     shift
 fi
+# Ensure output folder exists
+OUTDIR="${OUTPUT}"
+mkdir -p "$OUTDIR"
 
 PSCRIPT=$CMSSW_BASE/src/FastPUPPI/NtupleProducer/python/scripts/
-$PSCRIPT/cmsSplit.pl --files "$MAIN/${PREFIX}*root" --label ${OUTPUT} ${CODE}.py --bash --n $N --rrb $OPTS  $* && bash ${CODE}_${OUTPUT}_local.sh 
+$PSCRIPT/cmsSplit.pl --files "$MAIN/${PREFIX}*root" --label ${OUTPUT} ${CODE}.py --bash --n $N --outdir "$OUTDIR" --rrb $OPTS  $* && bash ${CODE}_${OUTPUT}_local.sh 
 
 if $clean; then
     REPORT=$(grep -o "tee \S\+_${OUTPUT}.report.txt" ${CODE}_${OUTPUT}_local.sh  | awk '{print $2}');
