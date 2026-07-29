@@ -172,6 +172,30 @@ process.l1pfjetTaggerTable = cms.EDProducer("L1PFJetTableProducer",
     moreVariables = cms.PSet(),
 )
 
+process.genParticleTable = cms.EDProducer("SimpleGenParticleFlatTableProducer",
+    src = cms.InputTag("genParticles"),
+    cut = cms.string(""),   # no filter → include all particles
+    name = cms.string("GenPart"),
+    doc  = cms.string("All generator particles with mother/daughter indices"),
+    singleton = cms.bool(False),
+    extension = cms.bool(False),
+
+    variables = cms.PSet(
+        pt  = Var("pt", float, precision=8),
+        eta = Var("eta", float, precision=8),
+        phi = Var("phi", float, precision=8),
+        mass = Var("mass", float, precision=8),
+        pdgId = Var("pdgId", int),
+        status = Var("status", int),
+        charge = Var("charge", int),
+        vx = Var("vx", float, precision=10),
+        vy = Var("vy", float, precision=10),
+        vz = Var("vz", float, precision=10),
+        genPartIdxMother = Var("?numberOfMothers>0?motherRef(0).key():-1", int, doc="index of the mother particle"),
+    )
+)
+process.extraPFStuff.add(process.genParticleTable)
+
 process.l1pfmetTable = cms.EDProducer("L1PFMetTableProducer",
     genMet = cms.InputTag("genMetTrue"), 
     flavour = cms.string(""),
