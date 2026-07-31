@@ -249,6 +249,7 @@ class JetNTuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources,edm::
     float jet_phi_;
     float jet_phi_phys_;
     float jet_pt_;
+    float jet_pt_log_;
     float jet_pt_phys_;
     // float jet_pt_raw_phys_;
     float jet_pt_corr_;
@@ -490,6 +491,7 @@ JetNTuplizer::JetNTuplizer(const edm::ParameterSet& iConfig) :
     tree_->Branch("jet_phi", &jet_phi_);
     tree_->Branch("jet_phi_phys", &jet_phi_phys_);
     tree_->Branch("jet_pt", &jet_pt_);
+    tree_->Branch("jet_pt_log", &jet_pt_log_);
     tree_->Branch("jet_pt_phys", &jet_pt_phys_);
     // tree_->Branch("jet_pt_raw_phys", &jet_pt_raw_phys_);
     tree_->Branch("jet_mass_phys", &jet_mass_phys_);
@@ -907,6 +909,7 @@ JetNTuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
         // get hardware value jet
         jet_pt_ = float(ctJet.hwPt);
+        jet_pt_log_ = float(l1ct::log_with_shift<l1ct::pt_t,L1TSC4NGJet::inputtype, 256>(ctJet.hwPt));
         jet_pt_phys_ = jetv_l1[i]->pt();
         jet_eta_ = float(ctJet.hwEta);
         jet_eta_phys_ = jetv_l1[i]->eta();
