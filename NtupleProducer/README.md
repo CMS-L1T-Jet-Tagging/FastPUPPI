@@ -10,8 +10,8 @@ On top of this, the package contains several utilities and scripts for quick per
 
 ## CMSSW area setup 
 ```
-cmsrel CMSSW_15_1_0_pre4
-cd CMSSW_15_1_0_pre4/src
+cmsrel CMSSW_17_0_0_pre2/
+cd CMSSW_17_0_0_pre2/src
 cmsenv
 git cms-init
 git cms-addpkg DataFormats/L1TParticleFlow
@@ -20,10 +20,10 @@ git cms-addpkg L1Trigger/Phase2L1ParticleFlow
 git cms-addpkg L1Trigger/TrackTrigger
 git cms-addpkg SimTracker/TrackTriggerAssociation
 git cms-addpkg L1Trigger/Phase2L1ParticleFlow
-git cms-checkout-topic -u p2l1pfp:L1PF_15_1_X
+git cms-checkout-topic -u p2l1pfp:L1PF_17_0_X
 
 # scripts
-git clone git@github.com:p2l1pfp/FastPUPPI.git -b 15_1_X
+git clone git@github.com:p2l1pfp/FastPUPPI.git -b 17_0_X
 
 scram b -j8
 ```
@@ -45,6 +45,7 @@ The supported input campaings are:
  * `11_0_X` from the HLT TDR campaign (Phase2C9, Geometry D49, HGCal v11).
 
 Existing input files available are:
+ * `151X`: input files from processing `14_0_X` Phase2Spring24 samples in `CMSSW_15_1_0_pre4` + `p2l1pfp:15_1_X`, from `/eos/cms/store/cmst3/group/l1tr/FastPUPPI/15_1_X/fpinputs_140X/v1/`
  * `140X_v0`: input files from processing `14_0_X` Phase2Spring24 samples in `CMSSW_14_2_0_pre2` + `p2l1pfp:l1ct-142x-v1.0`, from `/eos/cms/store/cmst3/group/l1tr/FastPUPPI/14_2_X/fpinputs_140X/v0/`
  * `131X_v9a`: input files from processing `13_1_X` Phase2Spring23 samples in `CMSSW_14_0_0_pre3` + `cms-l1t-offline:phase2-l1t-1400pre3_v9`, from `/eos/cms/store/cmst3/group/l1tr/FastPUPPI/14_0_X/fpinputs_131X/v9a/`
  * `131X_v3`: input files from processing `13_1_X` Phase2Spring23 samples in `CMSSW_14_0_0_pre3` + `cms-l1t-offline:phase2-l1t-1400pre3_v4`, from `/store/cmst3/group/l1tr/cerminar/14_0_X/fpinputs_131X/v3`
