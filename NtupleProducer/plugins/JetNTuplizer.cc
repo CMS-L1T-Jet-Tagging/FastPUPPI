@@ -79,6 +79,8 @@
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/PatCandidates/interface/PackedCandidate.h"
 
+#include "Compression.h"
+
 // some tools to fix inputs or calculate them
 namespace jettools{
 
@@ -717,7 +719,7 @@ JetNTuplizer::JetNTuplizer(const edm::ParameterSet& iConfig) :
 
     // -------------------------------------
     // settings for output TFile and TTree
-    fs->file().SetCompressionAlgorithm(ROOT::ECompressionAlgorithm::kLZ4);
+    fs->file().SetCompressionAlgorithm(ROOT::RCompressionSetting::EAlgorithm::kLZ4);
     fs->file().SetCompressionLevel(4);
     for (int idx = 0; idx < tree_->GetListOfBranches()->GetEntries(); ++idx) {
         TBranch* br = dynamic_cast<TBranch*>(tree_->GetListOfBranches()->At(idx));
@@ -1478,10 +1480,10 @@ JetNTuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             l1ct::PuppiObj puppicand = l1ct::PuppiObj::unpack(pfcand.encodedPuppi64());
 
             constexpr int INV_LUT_SIZE = 1024;
-            L1TSC4NGJet::inputtype inv_jet_pt = L1TSC4NGJet::inputtype(l1ct::invert_with_shift<l1ct::pt_t, l1ct::pt_t, INV_LUT_SIZE>(jet_pt_)); // divide by HW jet pt, which should be without JEC!
+            L1TSC4NGJet::inputtype inv_jet_pt = L1TSC4NGJet::inputtype(l1ct::invert_with_shift<l1ct::pt_t, L1TSC4NGJet::inv_pt_t, INV_LUT_SIZE>(jet_pt_)); // divide by HW jet pt, which should be without JEC!
 
             constexpr int LOG_LUT_SIZE = 256;
-            L1TSC4NGJet::inputtype log_jet_pt = L1TSC4NGJet::inputtype(l1ct::log_with_shift<l1ct::pt_t,l1ct::pt_t, LOG_LUT_SIZE>(puppicand.hwPt));
+            L1TSC4NGJet::inputtype log_jet_pt = L1TSC4NGJet::inputtype(l1ct::log_with_shift<l1ct::pt_t,L1TSC4NGJet::log_pt_t, LOG_LUT_SIZE>(puppicand.hwPt));
 
             L1SCJetEmu::detaphi_t puppi_dphi(puppicand.hwPhi - jet_phi_);
             // phi wrap
