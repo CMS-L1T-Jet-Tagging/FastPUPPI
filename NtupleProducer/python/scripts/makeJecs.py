@@ -40,7 +40,7 @@ if __name__ == "__main__":
     tree = ROOT.TChain("Events")
     filenames = []
     for a in args[:]:
-        if a.endswith(".root"): 
+        if a.endswith(".root"):
             filenames.append(a)
             tree.Add(a)
             args.remove(a)
@@ -53,7 +53,10 @@ if __name__ == "__main__":
                 print("Got branch "+whats[-1])
 
     ROOT.gSystem.Load("libL1TriggerPhase2L1ParticleFlow")
-    ROOT.gInterpreter.ProcessLine('#include "L1Trigger/Phase2L1ParticleFlow/interface/corrector.h"')
+    ROOT.gInterpreter.Declare(r'''
+    #define CMSSW_GIT_HASH 1
+    #include "L1Trigger/Phase2L1ParticleFlow/interface/corrector.h"
+    ''')
 
     if options.closurePlots:
         os.system("mkdir -p "+options.closurePlots)
@@ -85,8 +88,8 @@ if __name__ == "__main__":
             perf = _progress( "Making response for %s (%.3f < |eta| < %.3f)..." % (w,etas[ieta-1],etas[ieta]))
             prof, _ = doRespPt("jet",tree,w,expr,cut,mcpt=mcpt,xpt=mcpt,fitrange=options.fitrange,fitfunc="none",ptbins=ptForResp,keepGraph=options.closurePlots)
             perf.done()
-            if prof and options.gauss: prof = getattr(prof,'gaus',None) 
-            if not prof: 
+            if prof and options.gauss: prof = getattr(prof,'gaus',None)
+            if not prof:
                 print("No response plot for "+cut)
                 continue
             responses = [ prof.GetY()[i] for i in range(prof.GetN()) ]
@@ -99,7 +102,7 @@ if __name__ == "__main__":
                     respformula = "1/x++1"
                     tf1 = ROOT.TF1(w+m+"_f1", respformula, 0, ptForResp[-1])
                     prof.Fit(tf1, "WNQ0C EX0", "", options.fitrange[0], options.fitrange[1])
-                    (scale,offs) = tf1.GetParameter(1), tf1.GetParameter(0) 
+                    (scale,offs) = tf1.GetParameter(1), tf1.GetParameter(0)
                     xmin, xmax, npoints = recoPtMin, min(500.,(400.-offs)/scale), 200
                     corrgraph = ROOT.TGraph(npoints)
                     for i in range(npoints):
@@ -107,10 +110,10 @@ if __name__ == "__main__":
                         corrgraph.SetPoint(i, pt, (pt-offs)/scale)
                     h.setGraph(corrgraph, ieta-1);
             if options.closurePlots:
-                cols = [ ROOT.kRed, ROOT.kGreen+2, ROOT.kBlue, ROOT.kMagenta+1, ROOT.kOrange+7, ROOT.kCyan+1, ROOT.kGray+2, ROOT.kViolet+5, ROOT.kSpring+5, ROOT.kAzure+1, ROOT.kPink+7, ROOT.kOrange+3, ROOT.kBlue+3, ROOT.kMagenta+3, ROOT.kRed+2, ] 
+                cols = [ ROOT.kRed, ROOT.kGreen+2, ROOT.kBlue, ROOT.kMagenta+1, ROOT.kOrange+7, ROOT.kCyan+1, ROOT.kGray+2, ROOT.kViolet+5, ROOT.kSpring+5, ROOT.kAzure+1, ROOT.kPink+7, ROOT.kOrange+3, ROOT.kBlue+3, ROOT.kMagenta+3, ROOT.kRed+2, ]
                 perf = _progress( "   making closure plots...")
-                plots = []; 
-                ptForClosure = [10,20,25,30,35,40,45,50,55,60,70,80,90,100,120,140,160,200,250] 
+                plots = [];
+                ptForClosure = [10,20,25,30,35,40,45,50,55,60,70,80,90,100,120,140,160,200,250]
                 if etas[ieta-1] > 3: ptForClosure = [20,30,40,50,60,80,100,135,200]
                 if options.rawInClosurePlots:
                     rresp, _ = doRespPt("jet",None,w+"_"+m, None, None, fitfunc="none", ptbins=ptForResp, fromGraph=prof.graph)
@@ -156,7 +159,7 @@ if __name__ == "__main__":
     tfout = ROOT.TFile.Open(options.rootfile, "RECREATE");
     print("Saving to output file: ")
     for (m,w),h in ptCorrs.items():
-        dirname = ("%s_%s" % (w,m)) if len(methods) > 1 else w 
+        dirname = ("%s_%s" % (w,m)) if len(methods) > 1 else w
         h.writeToFile(tfout.mkdir(dirname))
         print("  - ",dirname)
     tfout.Close()
