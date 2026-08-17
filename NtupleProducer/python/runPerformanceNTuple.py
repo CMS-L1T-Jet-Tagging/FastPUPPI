@@ -356,6 +356,7 @@ def addSeededConeJets():
     process.l1pfjetTable.jets.scPuppi = cms.InputTag('l1tSC4PFL1PuppiEmulator')
     process.l1pfjetTable.jets.scPuppiCorr = cms.InputTag('l1tSC4PFL1PuppiCorrectedEmulator')
     process.l1pfmetTable.mets.scPuppiCorrMHT = cms.InputTag("l1tSC4PFL1PuppiCorrectedEmulatorMHT")
+    process.l1pfjetTable.jets.scPuppiExtended = cms.InputTag('l1tSC4PFL1PuppiExtendedEmulator')
 
 def addPhase1Jets():
     process.extraPFStuff.add(process.l1tPhase1JetProducer9x9, process.l1tPhase1JetCalibrator9x9, process.l1tPhase1JetSumsProducer9x9)
