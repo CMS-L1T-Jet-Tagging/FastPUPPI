@@ -71,7 +71,8 @@ process.p.associate(process.PFInputsTask)
 process.p.associate(process.SimL1EmulatorTask)
 
 process.out = cms.OutputModule("PoolOutputModule",
-        fileName = cms.untracked.string("inputs151X.root"),
+        # fileName = cms.untracked.string("inputs151X.root"),
+        fileName = cms.untracked.string("inputs170X.root"),
         outputCommands = cms.untracked.vstring("drop *",
             # --- GEN
             "keep *_genParticles_*_*",
